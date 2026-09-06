@@ -91,6 +91,7 @@ func _create_environment() -> void:
             material.shader = load("res://shaders/surface.gdshader")
             material.set_shader_parameter("surface_texture", load("res://assets/textures/" + name_key + ".png"))
             material.set_shader_parameter("snap", .12)
+            material.set_shader_parameter("surface_brightness", .80 if name_key == "Peat" else 1.0)
             node.set_surface_override_material(i, material)
     var environment := WorldEnvironment.new()
     environment.environment = Environment.new()
@@ -138,10 +139,11 @@ func _scatter(mesh: Mesh, count: int, material: Material, fern: bool) -> void:
 func _create_vegetation() -> void:
     grass_material = ShaderMaterial.new()
     grass_material.shader = load("res://shaders/grass.gdshader")
-    grass_material.set_shader_parameter("dry_color", Color(.15,.19,.14))
+    grass_material.set_shader_parameter("dry_color", Color(.12,.152,.112))
     fern_material = ShaderMaterial.new()
     fern_material.shader = load("res://shaders/grass.gdshader")
-    fern_material.set_shader_parameter("dry_color", Color(.13,.165,.12))
+    fern_material.set_shader_parameter("dry_color", Color(.104,.132,.096))
+    fern_material.set_shader_parameter("wind_height", .30)
     _scatter(_asset_mesh("res://assets/models/grass_tuft.glb"), 440 if mobile else 740, grass_material, false)
     _scatter(_asset_mesh("res://assets/models/fern.glb"), 22 if mobile else 42, fern_material, true)
 

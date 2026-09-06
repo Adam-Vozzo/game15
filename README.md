@@ -20,7 +20,7 @@ The web version downloads approximately 40 MB of WebAssembly plus a 3 MB game pa
 
 - An editable Blender landscape with nine twisted trees, exposed roots, splintered crowns, individual branches, 180 angular stones, and an eroded hollow.
 - Original 128×128 bark, peat, and lichen textures with nearest filtering.
-- Blender grass and fern meshes, instanced in spatial chunks and animated on the GPU; desktop and mobile use different density budgets.
+- Blender grass and fern meshes, instanced in spatial chunks and animated on the GPU. Wind strength uses local vertex height to keep roots anchored despite flipped glTF texture coordinates; desktop and mobile use different density budgets.
 - Depth-aware fog with 3D noise, low rolling ribbons, moonlit scattering, drifting clouds, and a soft moon halo.
 - A separate low-resolution 3D viewport: up to 960×640 on desktop and 640×480 on touch devices. Interface text stays at display resolution.
 - Subtle vertex snapping, quantized colors, ordered dithering, and film grain.
@@ -67,12 +67,15 @@ Manual test commands:
 ```sh
 godot --headless --path . --script tests/run.gd
 node tests/validate_web.mjs
+# GPU regression: roots stay still while upper blades move (requires a display).
+godot --path . --rendering-method gl_compatibility --script tests/grass_wind.gd
 ```
 
 ## Validation and limitations
 
 - Blender generation and GLB export completed successfully.
 - Godot imported the project and rendered desktop and portrait previews without script or shader errors.
+- A GPU regression renders the imported grass at two wind phases and verifies a stationary root silhouette with moving upper blades.
 - Input tests cover simultaneous fingers, ownership, cancellation, focus loss, UI exclusion, dead zone, and speed limiting.
 - The exported game loaded and rendered in the in-app Chromium browser, and its Pause button changed to Resume correctly.
 - The release web export was generated and its files, sizes, WebAssembly header, package header, and project-relative paths were validated.
@@ -80,4 +83,5 @@ node tests/validate_web.mjs
 - Movement is an atmospheric camera walk grounded to the terrain, not a physics-based game with obstacle collision or objectives.
 
 All modeled assets, textures, wind audio, and project-specific code were created for this scene. Godot's exported engine and its third-party notices retain their upstream licenses; see [Godot's license](https://godotengine.org/license/).
+
 
