@@ -7,6 +7,8 @@ const match=html.match(/const GODOT_CONFIG = (\{.*\});/);
 assert.ok(match,'Export engine configuration must exist');
 const config=JSON.parse(match[1]);
 assert.equal(config.executable,'index');
+assert.equal(config.canvasResizePolicy,0,'Canvas dimensions are managed explicitly');
+assert.match(html,/ResizeObserver\(fitGameCanvas\)/,'Canvas must follow browser resizing');
 assert.ok(!config.serviceWorker,'Pages export must not rely on a service worker');
 for(const [name,size] of Object.entries(config.fileSizes)){
   assert.equal(statSync(new URL(name,folder)).size,size,`Incorrect or missing ${name}`);

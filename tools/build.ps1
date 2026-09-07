@@ -6,6 +6,8 @@ New-Item -ItemType Directory -Path $logRoot -Force | Out-Null
 if ($RebuildAssets) {
     & $Blender --background --python (Join-Path $projectRoot 'blender/build_assets.py')
     if ($LASTEXITCODE -ne 0) { throw 'Blender asset build failed.' }
+    & $Blender --background --python (Join-Path $projectRoot 'blender/build_places.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Blender coast/town build failed.' }
 }
 function Invoke-Engine([string[]]$EngineArgs, [string]$Stage) {
     $outLog = Join-Path $logRoot "$Stage.log"
@@ -19,6 +21,7 @@ function Invoke-Engine([string[]]$EngineArgs, [string]$Stage) {
 }
 Invoke-Engine @('--editor','--import','--quit') 'import'
 Invoke-Engine @('--script','tests/run.gd') 'tests'
+Invoke-Engine @('--script','tests/channels.gd') 'channels'
 Invoke-Engine @('--export-release','Web','docs/index.html') 'export'
 Set-Content -LiteralPath (Join-Path $projectRoot 'docs/.nojekyll') -Value ''
 Write-Host 'Web export ready in docs/. Commit the source and docs together.'

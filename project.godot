@@ -1,10 +1,10 @@
 [application]
-config/name="Hollow II — The Still Moor"
+config/name="Still — Atmosphere Channels"
 boot_splash/show_image=false
 boot_splash/bg_color=Color(0.063,0.098,0.106,1)
-run/main_scene="res://main.tscn"
+run/main_scene="res://menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/description="A moonlit moor, built in Blender and Godot."
+config/description="Three quiet places: a moonlit moor, a Phuket sunset, and a rain-softened Japanese town. Built in Blender and Godot."
 
 [display]
 window/size/viewport_width=1280
@@ -24,8 +24,12 @@ environment/defaults/default_clear_color=Color(0.065,0.094,0.098,1)
 
 [input_devices]
 pointing/emulate_touch_from_mouse=false
-pointing/emulate_mouse_from_touch=false
+pointing/emulate_mouse_from_touch=true
 
 [audio]
 default_bus_layout="res://default_bus_layout.tres"
+
+
+[autoload]
+Session="*res://scripts/session.gd"
 

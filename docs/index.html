@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-		<title>Hollow II — The Still Moor</title>
+		<title>Still — Atmosphere Channels</title>
 		<style>
 html, body, #canvas {
 	margin: 0;
@@ -90,7 +90,7 @@ body {
 	z-index: 1;
 }
 		</style>
-		<meta name="theme-color" content="#10191b"><style>html,body{background:#10191b;overscroll-behavior:none}canvas{touch-action:none}#status{background:#10191b!important}</style>
+		<meta name="theme-color" content="#10191b"><style>html,body{background:#10191b;overscroll-behavior:none}canvas{touch-action:none;width:100vw!important;height:100vh!important}#status{background:#10191b!important}</style><script>function fitGameCanvas(){const c=document.getElementById('canvas');if(!c)return;const w=Math.max(1,Math.round(innerWidth)),h=Math.max(1,Math.round(innerHeight));if(c.width!==w)c.width=w;if(c.height!==h)c.height=h;}addEventListener('DOMContentLoaded',()=>{fitGameCanvas();new ResizeObserver(fitGameCanvas).observe(document.documentElement);});addEventListener('resize',fitGameCanvas);</script>
 	</head>
 	<body>
 		<canvas id="canvas">
@@ -109,7 +109,7 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":2757816,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":8063876,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 

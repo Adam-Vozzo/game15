@@ -30,6 +30,16 @@ var footer: Label
 var hint: Label
 var hide_button: Button
 var rng := RandomNumberGenerator.new()
+var experience_id := "moor"
+var bounds := Vector4(-44,44,-72,24)
+var menu_button: Button
+var clean_capture := false
+
+func surface_height(x: float, z: float) -> float:
+    return ground_height(x,z)
+
+func can_walk(_point: Vector3) -> bool:
+    return true
 
 static func ground_height(x: float, z: float) -> float:
     var channel := exp(-pow((x - 2.0 - sin(z * .045) * 3.0) / 3.7, 2.0)) * .5
@@ -37,10 +47,14 @@ static func ground_height(x: float, z: float) -> float:
 
 func _ready() -> void:
     rng.seed = 14015
+    Session.last_scene = experience_id
+    sound_on = Session.sound_enabled
     mobile = DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
     for argument in OS.get_cmdline_user_args():
         if argument.begins_with("--capture="):
             capture_path = argument.trim_prefix("--capture=")
+        if argument == "--clean-capture":
+            clean_capture = true
         if argument == "--mobile-test":
             mobile = true
     if OS.has_feature("web"):
@@ -52,8 +66,13 @@ func _ready() -> void:
     _create_camera()
     _create_interface()
     _create_audio()
-    get_viewport().size_changed.connect(_resize)
+    get_viewport().size_changed.connect(_resize,CONNECT_DEFERRED)
     _resize()
+    if clean_capture:
+        ui.hide()
+        hide_button.hide()
+        menu_button.hide()
+        touch.hide()
     print("HOLLOW_READY: Blender assets loaded, Godot atmosphere active")
 
 func _create_view() -> void:
@@ -212,16 +231,26 @@ func _create_interface() -> void:
     ui.add_child(controls)
     var sound_button := _button("Sound off", func():
         sound_on = not sound_on
+        Session.sound_enabled = sound_on
         if sound_on: audio.play()
         else: audio.stop()
         controls.get_child(0).text = "Sound on" if sound_on else "Sound off"
     )
-    sound_button.tooltip_text = "Enable the wind"
+    sound_button.tooltip_text = "Toggle ambient sound"
     _button("Pause", func():
         paused = not paused
         controls.get_child(1).text = "Resume" if paused else "Pause"
     )
     _button("Reset", _reset)
+    controls.get_child(0).text = "Sound on" if sound_on else "Sound off"
+    menu_button = Button.new()
+    menu_button.text = "Channels"
+    menu_button.tooltip_text = "Return to the main menu (Esc)"
+    menu_button.custom_minimum_size = Vector2(96,44)
+    menu_button.flat = true
+    menu_button.add_theme_font_size_override("font_size",14)
+    menu_button.pressed.connect(_return_to_menu)
+    add_child(menu_button)
     hide_button = Button.new()
     hide_button.text = "Hide controls"
     hide_button.flat = true
@@ -248,15 +277,13 @@ func _create_audio() -> void:
     audio.stream = stream
     audio.volume_db = -5
     add_child(audio)
+    if sound_on: audio.play()
 
 func _sync_display_size() -> void:
-    var logical_size := DisplayServer.window_get_size()
-    if OS.has_feature("web"):
-        logical_size = Vector2i(int(JavaScriptBridge.eval("window.innerWidth")), int(JavaScriptBridge.eval("window.innerHeight")))
-    logical_size.x = maxi(logical_size.x, 320)
-    logical_size.y = maxi(logical_size.y, 240)
+    var logical_size: Vector2i = Session.display_size()
     var window := get_window()
     window.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+    window.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
     if window.content_scale_size != logical_size:
         window.content_scale_size = logical_size
 
@@ -269,6 +296,7 @@ func _resize() -> void:
     camera.keep_aspect = Camera3D.KEEP_WIDTH if screen.x < screen.y else Camera3D.KEEP_HEIGHT
     camera.fov = 72 if screen.x < screen.y else 61
     var narrow := screen.x < 720
+    top_label.add_theme_font_size_override("font_size",20 if screen.x < 500 else 29)
     top_label.position = Vector2(30,28)
     subtitle.position = Vector2(32,69)
     footer.position = Vector2(32,screen.y - (240 if narrow else 109))
@@ -276,7 +304,12 @@ func _resize() -> void:
     hint.text = "LEFT THUMB TO WALK  ·  DRAG TO LOOK" if mobile else "DRAG TO LOOK  ·  WASD TO WANDER"
     controls.reset_size()
     controls.position = Vector2(screen.x-controls.size.x-26,screen.y-93)
+    if screen.x < 500 and screen.y > 480:
+        controls.position.y = screen.y-205
+        footer.position.y = screen.y-310
+        hint.position.y = footer.position.y+40
     hide_button.position = Vector2(screen.x-150,screen.y-45)
+    menu_button.position = Vector2(screen.x-122,22)
     if screen.y < 480:
         footer.visible = false
         hint.visible = false
@@ -285,14 +318,21 @@ func _resize() -> void:
         footer.visible = not hidden_ui
         hint.visible = not hidden_ui
         subtitle.visible = not hidden_ui
-    touch.blocked_rects = [controls.get_global_rect(),hide_button.get_global_rect()]
+    touch.blocked_rects = [controls.get_global_rect(),hide_button.get_global_rect(),menu_button.get_global_rect()]
     dragging = false
 
 func _toggle_ui() -> void:
     hidden_ui = not hidden_ui
     ui.visible = not hidden_ui
     hide_button.text = "Show controls" if hidden_ui else "Hide controls"
-    touch.blocked_rects = [hide_button.get_global_rect()] if hidden_ui else [controls.get_global_rect(),hide_button.get_global_rect()]
+    touch.blocked_rects = [hide_button.get_global_rect(),menu_button.get_global_rect()] if hidden_ui else [controls.get_global_rect(),hide_button.get_global_rect(),menu_button.get_global_rect()]
+
+func _return_to_menu() -> void:
+    dragging = false
+    walking = Vector2.ZERO
+    if audio: audio.stop()
+    if touch: touch.reset_input()
+    get_tree().call_deferred("change_scene_to_file","res://menu.tscn")
 
 func _reset() -> void:
     camera.position = start
@@ -306,11 +346,15 @@ func _look(delta: Vector2) -> void:
     target_pitch = clampf(target_pitch-delta.y*.0025,-.65,.65)
 
 func _unhandled_input(event: InputEvent) -> void:
+    # GUI buttons receive emulated mouse taps; touch camera input is handled once.
+    if event is InputEventMouse and event.device == -1: return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
         dragging = event.pressed
     elif event is InputEventMouseMotion and dragging:
         _look(event.relative)
     elif event is InputEventKey and event.pressed and not event.echo:
+        if event.physical_keycode == KEY_ESCAPE:
+            _return_to_menu()
         if event.physical_keycode == KEY_H:
             _toggle_ui()
 
@@ -323,8 +367,8 @@ func _process(delta: float) -> void:
     delta = minf(delta,.04)
     if not paused:
         time += delta
-    grass_material.set_shader_parameter("wind_time",time)
-    fern_material.set_shader_parameter("wind_time",time)
+    if grass_material: grass_material.set_shader_parameter("wind_time",time)
+    if fern_material: fern_material.set_shader_parameter("wind_time",time)
     mist.set_shader_parameter("atmosphere_time",time)
     heading = lerpf(heading,target_heading,minf(delta*8,1))
     pitch = lerpf(pitch,target_pitch,minf(delta*8,1))
@@ -334,12 +378,16 @@ func _process(delta: float) -> void:
     direction = direction.limit_length(1)
     var forward := Vector3(-sin(heading),0,-cos(heading))
     var right := Vector3(cos(heading),0,-sin(heading))
-    camera.position += (right*direction.x-forward*direction.y)*delta*2.1
-    camera.position.x = clampf(camera.position.x,-44,44)
-    camera.position.z = clampf(camera.position.z,-72,24)
-    camera.position.y = ground_height(camera.position.x,camera.position.z)+1.85+(0 if paused else sin(time*.65)*.018)
+    var proposed := camera.position + (right*direction.x-forward*direction.y)*delta*2.1
+    if can_walk(proposed): camera.position = proposed
+    camera.position.x = clampf(camera.position.x,bounds.x,bounds.y)
+    camera.position.z = clampf(camera.position.z,bounds.z,bounds.w)
+    camera.position.y = surface_height(camera.position.x,camera.position.z)+1.85+(0 if paused else sin(time*.65)*.018)
     camera.rotation = Vector3(pitch,heading+(0 if paused else sin(time*.12)*.006),0)
     frame_count += 1
+    # A fixed logical viewport may not emit size_changed when CSS size changes.
+    if frame_count % 20 == 0 and get_window().content_scale_size != Session.display_size():
+        _resize()
     if capture_path != "" and frame_count == 40:
         _capture()
 
@@ -348,5 +396,3 @@ func _capture() -> void:
     get_viewport().get_texture().get_image().save_png(capture_path)
     print("CAPTURE_SAVED: ",capture_path)
     get_tree().quit()
-
-
