@@ -4,6 +4,7 @@ uniform sampler2D scene_texture : hint_screen_texture, filter_nearest;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
 uniform float atmosphere_time=0.0;
 uniform int place_kind=0;
+#include "res://shaders/scene_depth.gdshaderinc"
 float hash3(vec3 p){p=fract(p*.3183099+vec3(.1,.2,.3));p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
 float noise3(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash3(i),hash3(i+vec3(1,0,0)),f.x),mix(hash3(i+vec3(0,1,0)),hash3(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash3(i+vec3(0,0,1)),hash3(i+vec3(1,0,1)),f.x),mix(hash3(i+vec3(0,1,1)),hash3(i+vec3(1,1,1)),f.x),f.y),f.z);}
 float fbm(vec3 p){return noise3(p)*.58+noise3(p*2.03)*.28+noise3(p*4.1)*.14;}
@@ -29,6 +30,7 @@ void fragment(){
     vec3 origin=INV_VIEW_MATRIX[3].xyz;vec3 world=(INV_VIEW_MATRIX*view).xyz;
     vec3 ray=normalize(world-origin);float distance=min(length(world-origin),place_kind==0?380.:125.);
     vec3 color=depth<.00001?sky(ray):texture(scene_texture,SCREEN_UV).rgb;
+    if(depth>=.00001){color*=contact_occlusion(SCREEN_UV,view.xyz,VIEWPORT_SIZE,INV_PROJECTION_MATRIX,PROJECTION_MATRIX);}
     float trans=1.;vec3 scatter=vec3(0.);float prev=0.;
     float jitter=hash3(vec3(floor(FRAGCOORD.xy),1.));
     for(int i=0;i<24;i++){
@@ -47,6 +49,7 @@ void fragment(){
         float streak=(1.-smoothstep(.02,.06,abs(local.x-.5)))*step(.90,hash3(vec3(cell,2.)))*smoothstep(.1,.7,local.y);
         color+=vec3(.10,.12,.12)*streak*.17;
     }
+    color=place_kind==0 ? deepen_shadows(color,1.24,.008,1.10) : deepen_shadows(color,1.23,.006,1.08);
     float edge=smoothstep(.83,.15,length((SCREEN_UV-.5)*vec2(1.,.8)));color*=.84+.16*edge;
     float dither=(mod(FRAGCOORD.x+mod(FRAGCOORD.y,2.)*2.,4.)/4.-.375)/95.;
     color=floor((color+dither)*112.)/112.;color+=(hash3(vec3(FRAGCOORD.xy,floor(atmosphere_time*10.)))-.5)*.005;

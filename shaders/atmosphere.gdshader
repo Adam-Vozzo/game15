@@ -4,6 +4,7 @@ uniform sampler2D scene_texture : hint_screen_texture, filter_nearest;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
 uniform float atmosphere_time=0.0;
 uniform int fog_steps=32;
+#include "res://shaders/scene_depth.gdshaderinc"
 float hash3(vec3 p){p=fract(p*.3183099+vec3(.1,.2,.3));p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
 float noise3(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash3(i),hash3(i+vec3(1,0,0)),f.x),mix(hash3(i+vec3(0,1,0)),hash3(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash3(i+vec3(0,0,1)),hash3(i+vec3(1,0,1)),f.x),mix(hash3(i+vec3(0,1,1)),hash3(i+vec3(1,1,1)),f.x),f.y),f.z);}
 float fbm(vec3 p){return noise3(p)*.55+noise3(p*2.03)*.28+noise3(p*4.07)*.12+noise3(p*8.11)*.05;}
@@ -30,6 +31,7 @@ void fragment(){
     vec3 ray=normalize(world-origin);
     float distance_to_surface=min(length(world-origin),115.);
     vec3 color=depth<.00001?sky_color(ray):texture(scene_texture,SCREEN_UV).rgb;
+    if(depth>=.00001){color*=contact_occlusion(SCREEN_UV,view.xyz,VIEWPORT_SIZE,INV_PROJECTION_MATRIX,PROJECTION_MATRIX);}
     float trans=1.;vec3 fog=vec3(0.);float previous=0.;
     float jitter=hash3(vec3(floor(SCREEN_UV*VIEWPORT_SIZE),1.));
     float moon_alignment=pow(max(dot(ray,normalize(vec3(-.38,.37,-.8))),0.),12.);
@@ -52,6 +54,7 @@ void fragment(){
         fog+=trans*extinction*silver;trans*=1.-extinction;
     }
     color=color*trans+fog;
+    color=deepen_shadows(color,1.17,.003,1.06);
     float edge=smoothstep(.8,.15,length((SCREEN_UV-.5)*vec2(1.,.83)));
     color*=.76+edge*.24;
     float grain=(hash3(vec3(FRAGCOORD.xy,floor(atmosphere_time*12.)))-.5)*.008;

@@ -15,6 +15,8 @@ Three quiet places, modeled in **Blender** and rendered in **Godot 4**. A Wii-in
 
 All three use low-poly geometry, original small textures, a deliberately low-resolution 3D viewport, restrained vertex snapping, quantized colors, dithering and film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
 
+Each scene now has a separate luminance contrast curve for deeper blacks and stronger light/shadow separation. A shared depth-based ambient-occlusion pass shades nearby corners and object contacts before the fog is composited, preserving clear sky and luminous mist. It uses 12 samples on desktop and 8 on touch devices, rejects distant depth discontinuities, and fades out beyond the foreground. Like other screen-space effects, it can only use geometry currently visible to the camera. Strength and radius are adjustable in `shaders/scene_depth.gdshaderinc`.
+
 ## Play and controls
 
 Choose a channel from the menu. **Channels** in the upper-right corner, or **Esc**, returns to the same menu. Sound is off initially; its setting follows you between scenes.
@@ -88,6 +90,8 @@ godot --headless --path . --script tests/channels.gd
 node tests/validate_web.mjs
 # Imported grass root/upper-blade GPU regression, requiring a display:
 godot --path . --rendering-method gl_compatibility --script tests/grass_wind.gd
+# GPU occlusion: contact shading, clean flat surfaces/sky, and both sample budgets:
+godot --path . --script tests/occlusion.gd
 # Live native resize and touch-layout regression:
 godot --path . --script tests/resize.gd
 ```

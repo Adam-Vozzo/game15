@@ -17,7 +17,7 @@ void vertex() {
 }
 void fragment() {
     vec3 pigment = texture(surface_texture, UV).rgb * tint;
-    float light = 0.30 + 0.64 * max(dot(normalize(world_normal), normalize(vec3(-0.4,0.8,-0.5))), 0.0);
+    float light = 0.26 + 0.68 * max(dot(normalize(world_normal), normalize(vec3(-0.4,0.8,-0.5))), 0.0);
     float moss = smoothstep(0.45, 0.95, world_normal.y) * 0.12;
     ALBEDO = (pigment * light + vec3(0.010,0.018,0.009) * moss) * surface_brightness;
 }

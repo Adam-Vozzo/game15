@@ -17,5 +17,5 @@ void vertex() {
     VERTEX.z+=bend*sin(wind_time*2.0+root.x)*.045;
 }
 void fragment() {
-    ALBEDO = dry_color * (0.55 + blade_height*0.60 + variation*0.3);
+    ALBEDO = dry_color * (0.44 + blade_height*0.71 + variation*0.28);
 }

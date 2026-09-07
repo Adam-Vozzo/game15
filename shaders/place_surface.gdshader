@@ -21,7 +21,7 @@ void vertex(){
 }
 void fragment(){
     vec3 pigment=texture(base_texture,UV).rgb*base_color;
-    float light=.48+.60*max(dot(normalize(world_n),normalize(light_direction)),0.);
+    float light=.40+.70*max(dot(normalize(world_n),normalize(light_direction)),0.);
     vec3 color=pigment*light*light_color;
     if(sand_surface>.5){
         float edge=world_p.z-sin(world_p.x*.09)*1.1;

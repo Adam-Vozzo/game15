@@ -64,6 +64,7 @@ func _ready() -> void:
     _create_environment()
     _create_vegetation()
     _create_camera()
+    mist.set_shader_parameter("ao_samples",8 if mobile else 12)
     _create_interface()
     _create_audio()
     get_viewport().size_changed.connect(_resize,CONNECT_DEFERRED)
