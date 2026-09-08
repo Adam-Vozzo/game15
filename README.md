@@ -8,12 +8,17 @@ Three quiet places, modeled in **Blender** and rendered in **Godot 4**. A Wii-in
 | --- | --- |
 | **The Still Moor** | Moonlight through rolling ground fog, wind through rooted grass and ferns, twisted trees and an eroded hollow. The darker grass and ground from the earlier revision are preserved. |
 | **Phuket, Last Light** | Amber cloud cover, a shimmering sea and lapping foam, feathered palms, a gently rocking long-tail boat, a mooring rope, empty chairs, a forgotten cup, sandals and fading footprints. |
-| **Kasumi Lane** | An original rural Japanese town inspired by the quiet unease of Ebisugaoka: mist between timber houses, soft rain, wet paving, warm shoji windows, a paper lantern, fluttering noren and laundry, delivery crates, a bicycle, red flowers and a side-path shrine. |
+| **Kasumi Lane** | A rebuilt rural valley: two-storey timber shops, curved tiled eaves, lattice balconies, weathered signs, warm paper windows, lanterns, gutters, delivery crates and a bicycle. Side paths lead to flooded rice paddies, wheat, drying racks, a scarecrow, kitchen gardens and a wayside shrine. Wind, rain rings, low moving mist, wooded foothills and cloud breaks carry the atmosphere beyond the lane. |
 
 ![Phuket sunset](assets/menu/coast.png)
 ![Kasumi Lane](assets/menu/town.png)
 
-All three use low-poly geometry, original small textures, a deliberately low-resolution 3D viewport, restrained vertex snapping, quantized colors, dithering and film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
+All three use original modeled geometry and textures in a deliberately reduced-resolution 3D viewport. Kasumi now uses researched PS1 art constraints: four 256×256 texture pages, limited palettes, vertex-colored shelter shading and affine mapping on architectural modules. Its models prioritize silhouettes, joinery and readable detail. The moor and coast retain their existing snapping, dithering and grain; Kasumi adds no artificial vertex wobble or global film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
+
+See [Kasumi's hardware research and art decisions](art/PS1_ART_DIRECTION.md), including primary hardware references and the deliberate modern extensions. This is a PS1-inspired Godot experience, not a hardware-accurate console build.
+
+![The flooded lower fields](previews/kasumi-fields.png)
+![The wheat fields and wooded valley](previews/kasumi-wheat.png)
 
 Each scene now has a separate luminance contrast curve for deeper blacks and stronger light/shadow separation. A shared depth-based ambient-occlusion pass shades nearby corners and object contacts before the fog is composited, preserving clear sky and luminous mist. It uses 12 samples on desktop and 8 on touch devices, rejects distant depth discontinuities, and fades out beyond the foreground. Like other screen-space effects, it can only use geometry currently visible to the camera. Strength and radius are adjustable in `shaders/scene_depth.gdshaderinc`.
 
@@ -33,7 +38,7 @@ The menu reflows for portrait and short landscape windows. The scene camera adju
 
 The complete web export is committed in **`docs/`**. In repository **Settings → Pages**, select **Deploy from a branch → main → /docs**, then **Save**. Pages configuration is left to the repository owner.
 
-No build workflow or custom server headers are needed. The single-threaded Compatibility export uses WebGL 2 and WebAssembly; see [Godot's web export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html). It loads approximately 40 MB of engine WebAssembly plus an approximately 8 MB game package before starting.
+No build workflow or custom server headers are needed. The single-threaded Compatibility export uses WebGL 2 and WebAssembly; see [Godot's web export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html). It loads approximately 40 MB of engine WebAssembly plus an approximately 14 MB game package before starting.
 
 ## Edit in Godot or Blender
 
@@ -46,16 +51,22 @@ Open `project.godot` and press **F5** to run the channel menu. Open `main.tscn`,
 | `blender/hollow_moor.blend` | Editable moor, trees, roots, rocks and vegetation source |
 | `blender/phuket_coast.blend` | Editable beach, palms, boat, headlands and shore props |
 | `blender/kasumi_town.blend` | Editable houses, roofs, lane, props, shrine and plants |
+| `blender/kasumi_plants.blend` | Three branch-and-crown tree studies, rice, wheat, verge grass and lilies |
+| `blender/build_kasumi.py` | Deterministic architecture, terrain, field banks, props and plant source |
+| `art/kasumi_materials_0.aseprite` through `kasumi_materials_3.aseprite` | Editable 256×256 texture pages with named layers and palettes |
+| `art/kasumi_foliage.aseprite` | Cedar, broadleaf and mountain-ash cutouts; crowns use only 84–114 triangles each |
+| `art/build_kasumi_atlas.lua` | Aseprite script for the original material studies |
 | `blender/build_assets.py` | Deterministic original moor asset generator |
 | `blender/build_places.py` | Deterministic coast/town models, textures and ambient loops |
 | `assets/models/` | Exported GLBs used by Godot; static objects are joined to reduce draw calls |
 | `scripts/menu.gd`, `scripts/session.gd` | Responsive channels, scene transitions and shared sound preference |
 | `scripts/main.gd` | Shared viewport, camera, controls and moor assembly |
-| `scripts/place.gd` | Coast/town materials, ocean, motion, terrain and building bounds |
+| `scripts/place.gd` | Coast materials, ocean, boat and palm motion |
+| `scripts/kasumi.gd`, `assets/data/kasumi_layout.json` | Town assembly, fields, root-anchored crops, shared terrain heights and building bounds |
 | `scripts/touch_controls.gd` | Independent walking and looking gestures |
 | `shaders/` | Surface shading, grass/palm/cloth wind, water, fog, rain and menu background |
 
-The `.blend` sources keep individual modeled objects. They are excluded from automatic Godot importing with `blender/.gdignore`; opening the Godot project uses the committed GLBs and does not require configuring Blender.
+The `.blend` sources keep editable named objects and architectural groups. They are excluded from automatic Godot importing with `blender/.gdignore`; opening the Godot project uses the committed GLBs and does not require configuring Blender or Aseprite.
 
 The depth-aware fog is a custom ray-marched Compatibility post-process, so it also works in the web export. The original moor uses higher-density ground fog; the coast uses warm distance haze; the town uses low cold mist and rain. Palm deformation is weighted outward from the crown; cloth is weighted down from its anchored top edge. Grass still uses local vertex height, keeping its roots stationary even when imported UV coordinates are flipped.
 
@@ -69,14 +80,17 @@ Or use PowerShell:
 ./tools/build.ps1 -Godot 'C:/path/to/godot.exe'
 # Regenerate all three environments from the Blender scripts as well:
 ./tools/build.ps1 -Godot 'C:/path/to/godot.exe' -Blender 'C:/path/to/blender.exe' -RebuildAssets
+# Regenerate the Aseprite pages from Lua as well (overwrites texture-source edits):
+./tools/build.ps1 -Godot 'C:/path/to/godot.exe' -Blender 'C:/path/to/blender.exe' -Aseprite 'C:/path/to/aseprite.exe' -RebuildAssets -RebuildTextures
 ```
 
-The rebuild switch overwrites generated `.blend`, GLB, texture and audio files. Preserve manual art edits before running it. The town generator uses Yu Gothic if available on Windows to turn the short shop sign into mesh geometry; it does not bundle the font.
+The rebuild switch overwrites generated `.blend`, GLB, coast/moor texture and audio files. Kasumi reads the committed Aseprite PNG pages unless `-RebuildTextures` is explicitly supplied. Preserve manual art edits before regeneration. The town generator uses Yu Gothic if available on Windows to turn original shop signs into mesh geometry; it does not bundle the font.
 
 Scene previews are actual Godot renders. To refresh one, run a graphical Godot instance:
 
 ```sh
 godot --path . --resolution 1280x800 -- --experience=coast --clean-capture --capture=/absolute/path/to/assets/menu/coast.png
+godot --path . --resolution 1280x800 -- --experience=town --view=fields --clean-capture --capture=/absolute/path/to/previews/kasumi-fields.png
 # Omit --experience and --clean-capture to capture the menu.
 ```
 
@@ -87,6 +101,8 @@ Reimport preview images before exporting. Commit the source and rebuilt `docs/` 
 ```sh
 godot --headless --path . --script tests/run.gd
 godot --headless --path . --script tests/channels.gd
+godot --headless --path . --script tests/kasumi.gd
+godot --path . --script tests/kasumi_wind.gd
 node tests/validate_web.mjs
 # Imported grass root/upper-blade GPU regression, requiring a display:
 godot --path . --rendering-method gl_compatibility --script tests/grass_wind.gd
@@ -96,7 +112,7 @@ godot --path . --script tests/occlusion.gd
 godot --path . --script tests/resize.gd
 ```
 
-The build runs input tests and round trips through all three channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Desktop and portrait renders are inspected for framing, interface placement, and script/shader errors. The browser export also passed scene loading, return-to-menu and pause checks. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The exported package is checked for its WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
+The build runs input tests and round trips through all three channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 18 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
 
 Physical iOS/Android devices have not been tested. Browser/GPU performance varies; touch devices use a smaller render budget and less moor vegetation. The imported world art remains the same on desktop and touch.
 

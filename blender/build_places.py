@@ -155,131 +155,6 @@ y=beach_h(-6.5,6);all.append(box('Tea_Table',(-6.5,y+.6,6),(.7,.12,.7),wood));al
 all.append(ico('Forgotten_Cup',(-6.5,y+.74,6),(.07,.1,.07),cloth))
 save_export('phuket_coast',all)
 
-# --- Rain-softened rural town ---
-reset();all=[]
-def town_h(x,z):return .03+max(0,-z)*.012+abs(x)*.003
-v=[];uv=[];f=[];nx=70;nz=90
-for j in range(nz+1):
-    z=24-j*1.1
-    for i in range(nx+1):x=-38+i*1.1;v.append((x,town_h(x,z),z));uv.append((x/3,z/3))
-for j in range(nz):
-    for i in range(nx):a=j*(nx+1)+i;f.extend([(a,a+1,a+nx+1),(a+1,a+nx+2,a+nx+1)])
-all.append(mesh('Wet_Lane',v,f,stone,uv))
-# Houses are built individually, with timber frames, deep eaves, tiled ridges, and shoji lights.
-def house(x,z,w,d,h,index):
-    base=town_h(x,z);front=1 if x<0 else -1
-    all.append(box('Stone_Foundation',(x,base+.25,z),(w+.2,.5,d+.2),stone))
-    all.append(box('Plaster_Walls',(x,base+h/2+.35,z),(w,h,d),plaster))
-    for dx in [-w/2,0,w/2]:all.append(box('Timber_Post',(x+dx,base+h/2+.35,z+d/2+.04),(.14,h,.13),timber))
-    for dz in [-d/2,-d/4,0,d/4,d/2]:all.append(box('Side_Post',(x+front*(w/2+.04),base+h/2+.35,z+dz),(.13,h,.15),timber))
-    for y in [base+.65,base+1.8,base+h+.3]:all.append(box('Timber_Beam',(x+front*(w/2+.07),y,z),(.18,.13,d+.2),timber))
-    # Roof ridge runs along the street.
-    roof_y=base+h+.35;peak=roof_y+1.55;left=x-w/2-.65;right=x+w/2+.65
-    all.append(mesh('Gabled_Roof',[(left,roof_y,z-d/2-.7),(x,peak,z-d/2-.7),(right,roof_y,z-d/2-.7),(left,roof_y,z+d/2+.7),(x,peak,z+d/2+.7),(right,roof_y,z+d/2+.7)],[(0,1,4,3),(1,2,5,4)],roofmat))
-    all.append(beam('Roof_Ridge',(x,peak+.07,z-d/2-.8),(x,peak+.07,z+d/2+.8),.11,roofmat,steps=6))
-    for zz in [z-d/2,z+d/2]:
-        all.append(mesh('Gable_Plaster',[(x-w/2,roof_y,zz),(x,peak-.22,zz),(x+w/2,roof_y,zz)],[(0,1,2)],plaster))
-        all.append(box('Gable_Vent',(x,roof_y+.4,zz+.03),(1.2,.36,.10),timber))
-    # Weatherboards, shuttered end windows, and a little tiled awning break up the end walls.
-    for k in range(6):all.append(box('Weatherboard',(x,base+.40+k*.12,z+d/2+.075),(w,.08,.09),timber))
-    for dx in [-w*.24,w*.24]:
-        all.append(box('End_Shutter',(x+dx,base+1.95,z+d/2+.10),(1.15,1.2,.09),noren if index%2 else timber))
-        for kk in range(7):all.append(box('Shutter_Slat',(x+dx-.52+kk*.17,base+1.95,z+d/2+.16),(.035,1.22,.07),wood))
-        all.append(box('Small_Awning',(x+dx,base+2.67,z+d/2+.35),(1.48,.14,.75),roofmat))
-    for s in [-1,1]:
-        for j in range(int(d/.42)+3):
-            zz=z-d/2-.65+j*.42
-            all.append(beam('Tile_Rib',(x,peak+.03,zz),(x+s*(w/2+.65),roof_y+.03,zz),.055,roofmat,steps=5))
-    # Street-facing windows and sliding wooden shutters.
-    wallx=x+front*(w/2+.08)
-    for dz in [-d*.25,d*.22]:
-        all.append(box('WindowGlow' if index%3!=2 else 'Closed_Shutter',(wallx,base+1.8,z+dz),(.05,1.2,1.75),glow if index%3!=2 else noren))
-        for yy in [base+1.25,base+1.8,base+2.35]:all.append(box('Window_Frame',(wallx+front*.05,yy,z+dz),(.075,.055,1.83),timber))
-        for dd in [-.84,-.42,0,.42,.84]:all.append(box('Shoji_Lattice',(wallx+front*.055,base+1.8,z+dz+dd),(.08,1.22,.045),timber))
-    all.append(box('Door',(wallx+front*.025,base+1.25,z),(.05,1.8,.96),timber))
-    # Slatted porch, a step, and rain gutter.
-    all.append(box('Porch',(wallx+front*.45,base+.25,z),(1,.2,d*.65),timber))
-    all.append(box('Porch_Step',(wallx+front*.85,base+.1,z),(1,.2,1.4),stone))
-    all.append(beam('Rain_Gutter',(wallx+front*.45,roof_y-.06,z-d/2-.6),(wallx+front*.45,roof_y-.06,z+d/2+.6),.08,black))
-    all.append(beam('Downspout',(wallx+front*.4,roof_y-.05,z+d/2+.2),(wallx+front*.4,base+.1,z+d/2+.2),.05,black))
-for i,args in enumerate([(-8,5,7,9,3.4),(8,-1,7,8,4),(-9,-11,8,10,4.1),(9,-18,7,9,3.5),(-9,-28,7,8,3.2),(8,-36,7,9,4),(-9,-45,8,9,3.8)]):house(*args,i)
-# Narrow open drains and their stepping slabs.
-for x in [-3.5,3.5]:
-    all.append(box('Drain',(x,.04,-17),(.4,.04,76),black))
-    for z in [9,-3,-14,-28,-42]:all.append(box('Drain_Crossing',(x,town_h(x,z)+.1,z),(.9,.15,1.4),stone))
-# Utility poles, crossbars, and gently drooping wires.
-for x,z in [(3.6,12),(-3.7,-10),(3.8,-33),(-3.8,-53)]:
-    y=town_h(x,z);all.append(beam('Utility_Pole',(x,y,z),(x,y+7,z),.13,timber,.09));all.append(box('Crossarm',(x,y+6.7,z),(1.8,.13,.18),timber))
-    for dx in [-.7,.7]:all.append(ico('Ceramic_Insulator',(x+dx,y+6.9,z),(.095,.15,.095),white))
-for (x,z),(xx,zz) in zip([(3.6,12),(-3.7,-10),(3.8,-33)],[(-3.7,-10),(3.8,-33),(-3.8,-53)]):
-    for dx in [-.65,.65]:
-        pts=[]
-        for j in range(13):t=j/12;pts.append((x+(xx-x)*t+dx,6.9+town_h(x,z)*(1-t)+town_h(xx,zz)*t-math.sin(t*math.pi)*.8,z+(zz-z)*t))
-        all+=curve('Overhead_Wire',pts,.014,black)
-# A rice merchant's noren, delivery crates, and an old bicycle at the porch.
-for k in range(3):
-    ob=mesh('NorenFlag_'+str(k),[(0,0,0),(.54,0,0),(0,-.9,0),(.54,-.9,0)],[(0,1,3,2)],noren,[(0,0),(1,0),(0,1),(1,1)])
-    ob.location=xyz((-4.25,2.65,4.4+k*.57));ob.rotation_euler.z=math.pi/2;all.append(ob)
-for x,z in [(-3.9,7),(-4.2,7.5),(-3.9,8)]:
-    y=town_h(x,z);all.append(box('Delivery_Crate',(x,y+.25,z),(.55,.5,.5),wood))
-    for yy in [-.12,.12]:all.append(box('Crate_Slat',(x+.28,y+.25+yy,z),(.025,.025,.52),black))
-# A paper lantern sheltered under the merchant's eaves, with rings and a hanging cord.
-all.append(beam('Lantern_Cord',(-4.05,3.7,8.8),(-4.05,3.05,8.8),.012,black))
-all.append(ico('Paper_Lantern',(-4.05,2.78,8.8),(.22,.37,.22),glow,2))
-for yy in [2.46,2.56,2.68,2.8,2.92,3.04]:all.append(beam('Lantern_Rib',(-4.05,yy-.012,8.8),(-4.05,yy+.012,8.8),.20 if 2.55<yy<3 else .14,timber,steps=9))
-# Mismatched pots, broad leaves, a rain barrel, and a broom left at a doorway.
-for k,(x,z) in enumerate([(-3.8,10),(4.2,5),(-4,-5),(4.3,-13),(-4,-23),(4,-31)]):
-    y=town_h(x,z)
-    all.append(beam('Clay_Pot',(x,y,z),(x,y+.31,z),.17,rust,.23,8))
-    for j in range(7):
-        a=j*math.tau/7;r=random.uniform(.28,.46);yy=y+random.uniform(.45,.68)
-        all.append(mesh('Broad_Pot_Leaf',[(x,y+.3,z),(x+math.cos(a)*r*.5-math.sin(a)*.12,yy,z+math.sin(a)*r*.5+math.cos(a)*.12),(x+math.cos(a)*r,yy-.15,z+math.sin(a)*r),(x+math.cos(a)*r*.5+math.sin(a)*.12,yy,z+math.sin(a)*r*.5-math.cos(a)*.12)],[(0,1,2),(0,2,3)],moss))
-all.append(beam('Rain_Barrel',(-4,.12,-1),(-4,.9,-1),.31,blue,steps=10))
-all.append(beam('Broom_Handle',(-3.9,.05,6.4),(-4.25,1.5,6.5),.025,wood))
-all.append(beam('Broom_Brush',(-3.9,.07,6.4),(-3.98,.38,6.42),.17,rope,.06,6))
-# Bicycle wheels and frame (side-on to the lane).
-for z in [1.7,2.7]:
-    pts=[(-4.0,.5+town_h(-4,z)+math.sin(j*math.tau/24)*.36,z+math.cos(j*math.tau/24)*.36) for j in range(25)]
-    all+=curve('Bicycle_Tyre',pts,.035,black)
-    for j in range(8):all.append(beam('Bicycle_Spoke',(-4,.5+town_h(-4,z),z),pts[j*3],.008,white))
-y=town_h(-4,2)
-all+=curve('Bicycle_Frame',[(-4,y+.5,1.7),(-4,y+.6,2.3),(-4,y+1.0,2.0),(-4,y+.5,1.7)],.027,red)
-all+=curve('Bicycle_Frame',[(-4,y+.6,2.3),(-4,y+1.1,2.6),(-4,y+.5,2.7)],.027,red)
-all.append(box('Bicycle_Seat',(-4,y+1.04,2),(.25,.055,.28),black))
-# Merchant sign text, converted to geometry; no game logos or borrowed assets.
-font=None
-try:font=bpy.data.fonts.load('C:/Windows/Fonts/YuGothB.ttc')
-except:pass
-all.append(box('Merchant_Sign',(-4.38,3.15,5),(.1,.7,2),wood))
-if font:
-    curve_data=bpy.data.curves.new('Rice_Merchant_Text','FONT');curve_data.body='米 商店';curve_data.font=font;curve_data.size=.47;curve_data.extrude=.001
-    text=bpy.data.objects.new('Painted_Sign',curve_data);bpy.context.collection.objects.link(text);text.location=xyz((-4.30,2.96,4.2));text.rotation_euler=(math.pi/2,0,math.pi/2);text.data.materials.append(white)
-    bpy.ops.object.select_all(action='DESELECT');text.select_set(True);bpy.context.view_layer.objects.active=text;bpy.ops.object.convert(target='MESH');all.append(bpy.context.object)
-# Laundry just visible in a side gap. Top edge remains anchored when swaying.
-all+=curve('Clothesline',[(9,3.1,8),(15,3,8)],.012,black)
-for k in range(2):
-    ob=mesh('Laundry_'+str(k),[(0,0,0),(.8,0,0),(0,-1.3,0),(.8,-1.3,0)],[(0,1,3,2)],cloth);ob.location=xyz((10+k*2,3,8));all.append(ob)
-# Red roadside flowers and potted plants hint at the town's lingering care.
-for i in range(65):
-    x=random.choice([-1,1])*random.uniform(3.7,4.4);z=random.uniform(-46,13);y=town_h(x,z)
-    all.append(beam('Flower_Stem',(x,y,z),(x,y+.35,z),.009,moss,steps=3))
-    for k in range(4):a=k*math.pi/2;all.append(ico('RedFlowers',(x+math.cos(a)*.065,y+.37,z+math.sin(a)*.065),(.09,.025,.025),flower))
-for side,z in [(-1,12),(1,7),(-1,-8),(1,-22),(-1,-35),(1,-43)]:
-    for j in range(15):
-        x=side*random.uniform(3.8,4.4);zz=z+random.uniform(-.7,.7);y=town_h(x,zz);h=random.uniform(.28,.55)
-        all.append(beam('Cluster_Stem',(x,y,zz),(x,y+h,zz),.009,moss,steps=3))
-        for k in range(5):a=k*math.tau/5;all.append(ico('Spider_Lily',(x+math.cos(a)*.07,y+h,zz+math.sin(a)*.07),(.095,.028,.03),flower))
-        all.append(mesh('Lily_Leaves',[(x-.04,y,zz),(x-.16,y+.3,zz),(x+.04,y,zz),(x+.13,y+.28,zz+.05)],[(0,1,2),(0,2,3)],moss))
-# Small shrine beyond a side alley and mossy stone steps.
-for k in range(7):all.append(box('Shrine_Step',(14,.07+k*.17,-48-k*.6),(3,.2,.65),stone))
-for x in [12.6,15.4]:all.append(beam('Torii_Post',(x,1.1,-52.5),(x,4.4,-52.5),.16,red,.13))
-all.append(box('Torii_Crossbeam',(14,4.25,-52.5),(4.2,.22,.3),red));all.append(box('Torii_Cap',(14,4.6,-52.5),(4.8,.25,.44),black))
-for i in range(30):
-    x=random.choice([-1,1])*random.uniform(24,42);z=random.uniform(-75,22);h=random.uniform(8,15);all.append(beam('Cedar_Trunk',(x,0,z),(x,h,z),.22,timber,.07))
-    for k in range(3):
-        bpy.ops.mesh.primitive_cone_add(vertices=7,radius1=3-k*.4,radius2=0,depth=5,location=xyz((x,h-2-k*2,z)));ob=bpy.context.object;ob.name='Cedar_Canopy';ob.data.materials.append(moss);all.append(ob)
-for x,z in [(-40,-95),(40,-100),(0,-130)]:all.append(ico('Mountain',(x,8,z),(45,30,25),moss,2))
-save_export('kasumi_town',all)
 # Ambient loops: shore wash and soft rain, deliberately sparse and loopable.
 for name,kind in [('coast_wash','sea'),('town_rain','rain'),('menu_air','menu')]:
     sr=22050;duration=18;data=[];brown=0;rng=random.Random(551)
@@ -290,4 +165,8 @@ for name,kind in [('coast_wash','sea'),('town_rain','rain'),('menu_air','menu')]
         else:v=sum(math.sin(math.tau*f*t)*.014 for f in [220,277.183,329.628,440])*(.6+.2*math.sin(t*math.tau/9))
         fade=min(1,t/.25,(duration-t)/.25);data.append(int(max(-1,min(1,v*fade))*26000))
     with wave.open(str(R/'assets'/'audio'/(name+'.wav')),'wb') as f:f.setnchannels(1);f.setsampwidth(2);f.setframerate(sr);f.writeframes(struct.pack('<'+'h'*len(data),*data))
-print('PLACES COMPLETE: phuket_coast.blend, kasumi_town.blend, original meshes/textures/audio')
+print('COAST AND AUDIO COMPLETE; rebuilding Kasumi next')
+
+# Kasumi has its own architectural generator and committed Aseprite texture pages.
+import runpy
+runpy.run_path(str(R/'blender/build_kasumi.py'), run_name='__main__')
