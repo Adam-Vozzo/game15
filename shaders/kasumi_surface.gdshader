@@ -11,6 +11,7 @@ uniform float mountain = 0.0;
 uniform float terrain_surface = 0.0;
 uniform vec4 shelter_bounds[20];
 uniform int shelter_count = 0;
+uniform vec4 lamp_anchors[12];
 #include "res://shaders/kasumi_sky.gdshaderinc"
 varying vec3 world_p;
 varying vec3 world_n;
@@ -43,8 +44,8 @@ void vertex() {
     world_p = (MODEL_MATRIX*vec4(VERTEX,1.)).xyz;
     world_n = normalize(mat3(MODEL_MATRIX)*NORMAL);
     float facing = max(dot(world_n,normalize(vec3(-.35,.75,-.40))),0.);
-    float sky_fill = .43+.10*max(world_n.y,0.);
-    vertex_light = vec3(.80,.90,.96)*(sky_fill+facing*.48)*(terrain_surface>.5?vec3(.94):COLOR.rgb);
+    float sky_fill = .24+.055*max(world_n.y,0.);
+    vertex_light = vec3(.80,.90,.96)*(sky_fill+facing*.22)*(terrain_surface>.5?vec3(.94):COLOR.rgb);
 }
 void fragment() {
     // Perspective-correct object UVs keep architectural details fixed during motion.
@@ -83,15 +84,24 @@ void fragment() {
     float far_ground=smoothstep(65.,145.,length(world_p.xz));
     if (mountain>.5 || ((tile==4 || tile==5) && plant<.5)) {
         float land=sin(world_p.x*.063+sin(world_p.z*.036)*2.)*sin(world_p.z*.044)*.5+.5;
-        vec3 distant=mix(vec3(.105,.17,.16),vec3(.15,.21,.195),land);
+        vec3 distant=mix(vec3(.030,.050,.064),vec3(.055,.078,.092),land);
         color=mix(color,distant,mountain>.5?1.:far_ground);
     }
-    if (tile==7) { color= pigment*vec3(1.1,.96,.78); }
+    if (tile==7) { color= pigment*vec3(1.15,.88,.60); }
+    else if(mountain<.5){
+        for(int i=0;i<12;i++){
+            vec3 delta=lamp_anchors[i].xyz-world_p;
+            float distance=length(delta);
+            float falloff=pow(1.-smoothstep(.2,3.6,distance),2.);
+            float facing=max(dot(normalize(world_n),delta/max(distance,.01)),0.);
+            color+=pigment*vec3(.65,.30,.09)*falloff*(.2+.8*facing)*lamp_anchors[i].w;
+        }
+    }
     if (tile==4 || tile==3) {
         vec3 eye = normalize(INV_VIEW_MATRIX[3].xyz-world_p);
         float sheen = pow(1.-abs(dot(eye,normalize(world_n))),4.);
         float wet = smoothstep(.15,.75,sin(world_p.x*1.8+sin(world_p.z*.42))*sin(world_p.z*.69));
-        color = mix(color,color*.73+vec3(.075,.105,.12)*sheen,wet*.68*max(world_n.y,0.));
+        color = mix(color,color*.73+vec3(.025,.038,.052)*sheen,wet*.68*max(world_n.y,0.));
         if(tile==4 && world_n.y>.85 && abs(world_p.x)<2.10){
             vec2 q=world_p.xz*vec2(.77,.31);
             float pool=knoise(vec3(q.x,1.3,q.y))*.70+knoise(vec3(q.x*3.1,4.3,q.y*3.1))*.30;
@@ -106,6 +116,6 @@ void fragment() {
             color=mix(color,reflection+ring*.009,patch*(.20+sheen*.55));
         }
     }
-    if (tile==6) { color*=.52; color+=vec3(.035,.065,.081)*max(world_n.y*.1+.65,0.); }
+    if (tile==6) { color*=.52; color+=vec3(.010,.020,.032)*max(world_n.y*.1+.65,0.); }
     ALBEDO = max(color,vec3(0.));
 }

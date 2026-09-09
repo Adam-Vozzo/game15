@@ -326,11 +326,18 @@ for i in range(55):
     props.face([(x,y,z),(x+.06,y+.012,z+.07),(x+.15,y,z+.02),(x+.05,y,z-.04)],12 if i%3 else 13,.7)
 # A laundry line across a sheltered side passage.
 props.line([(-3.1,3.5,-14.8),(-12.8,3.9,-14.8)],.014,14)
+for x,top in [(-3.1,3.5),(-12.8,3.9)]:
+    ground=height(x,-14.8)
+    props.beam((x,ground-.10,-14.8),(x,top+.12,-14.8),.065,0,shade=.78)
+    props.beam((x,top-.05,-15.08),(x,top-.05,-14.52),.04,0,shade=.8)
+    props.box((x,ground+.08,-14.8),(.23,.22,.23),3,.8)
+def washing_line_y(x):return 3.5+(-3.1-x)*.4/9.7
 for j in range(4):
-    x=-4.5-j*1.35;origin=(x,3.56+j*.052,-14.8);cloth=Mesh('Laundry_%02d'%j)
+    x=-4.5-j*1.35;origin=(x,washing_line_y(x),-14.8);cloth=Mesh('Laundry_%02d'%j)
     for k in range(5):
-        y=origin[1]-k*.19
-        cloth.face([(x-.31,y,-14.8),(x+.31,y,-14.8),(x+.32,y-.19,-14.8),(x-.32,y-.19,-14.8)],15 if j%2 else 8,.80)
+        left=washing_line_y(x-.31)-k*.19;right=washing_line_y(x+.31)-k*.19
+        cloth.face([(x-.31,left,-14.8),(x+.31,right,-14.8),(x+.31,right-.19,-14.8),(x-.31,left-.19,-14.8)],15 if j%2 else 8,.80)
+    for dx in [-.25,.25]:props.box((x+dx,washing_line_y(x+dx)-.02,-14.8),(.035,.095,.045),0,.85)
     cloth.finish(origin)
 props.finish()
 

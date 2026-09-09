@@ -54,6 +54,26 @@ void fragment(){
         fog+=trans*extinction*silver;trans*=1.-extinction;
     }
     color=color*trans+fog;
+    // Radial sky visibility lets the depth silhouettes of real trees break up
+    // the moon shafts. Only add scattered light; never darken foreground edges.
+    vec3 moon_dir=normalize(vec3(-.38,.37,-.8));
+    vec4 moon_clip=PROJECTION_MATRIX*VIEW_MATRIX*vec4(origin+moon_dir*1000.,1.);
+    if(moon_clip.w>0.){
+        vec2 moon_uv=moon_clip.xy/moon_clip.w*.5+.5;
+        vec2 step_uv=(moon_uv-SCREEN_UV)/32.;
+        vec2 sample_uv=SCREEN_UV;
+        float visibility=0.;float weight=1.;float total=0.;
+        for(int s=0;s<32;s++){
+            sample_uv+=step_uv;
+            float inside=step(0.,sample_uv.x)*step(sample_uv.x,1.)*step(0.,sample_uv.y)*step(sample_uv.y,1.);
+            float sky=1.-step(.00001,texture(depth_texture,clamp(sample_uv,vec2(0.),vec2(1.))).r);
+            visibility+=sky*weight*inside;total+=weight;weight*=.965;
+        }
+        float cone=pow(max(dot(ray,moon_dir),0.),5.);
+        float veil=.55+.45*noise3(moon_dir*9.+vec3(-atmosphere_time*.038,0.,atmosphere_time*.011));
+        float air=smoothstep(0.,18.,distance_to_surface);
+        color+=vec3(.12,.16,.145)*(visibility/max(total,.001))*cone*veil*air;
+    }
     color=deepen_shadows(color,1.17,.003,1.06);
     float edge=smoothstep(.8,.15,length((SCREEN_UV-.5)*vec2(1.,.83)));
     color*=.76+edge*.24;

@@ -9,11 +9,24 @@ var materials: Dictionary = {}
 var plant_meshes: Dictionary = {}
 var water_material: ShaderMaterial
 var vegetation_instances := 0
+var lamp_anchors := PackedVector4Array()
 
 func _ready() -> void:
     experience_id = "town"
     layout = JSON.parse_string(FileAccess.get_file_as_string("res://assets/data/kasumi_layout.json"))
     fields = layout.fields
+    for building in layout.buildings:
+        if building.name not in ["Saegusa_general_store","Yamaji_tea_house","Old_rice_merchant","Corner_shop"]:continue
+        var r: Array = building.rect
+        var x: float = r[0]+r[2]*.5
+        var z: float = r[1]+r[3]*.5
+        var front := 1.0 if x<0 else -1.0
+        var fx: float = x+front*(r[2]-.44)*.5
+        var depth: float = r[3]-.44
+        var floor_y := _base_height(x,z)
+        lamp_anchors.append(Vector4(fx+front*.25,floor_y+1.95,z-depth*.30,1.0))
+        lamp_anchors.append(Vector4(fx+front*1.12,floor_y+2.3,z+depth*.34,.65))
+        lamp_anchors.append(Vector4(x,floor_y+2.07,z+depth*.5+.22,1.0))
     bounds = Vector4(layout.bounds[0],layout.bounds[1],layout.bounds[2],layout.bounds[3])
     for building in layout.buildings:
         var r: Array = building.rect
@@ -53,6 +66,7 @@ func _material(tile: int,cloth_motion: bool=false,plant_motion: int=0,foliage_ki
     material.shader = load("res://shaders/kasumi_surface.gdshader")
     material.set_shader_parameter("atlas",load("res://assets/textures/KasumiAtlas%d.png" % (tile/4)))
     material.set_shader_parameter("tile",tile)
+    material.set_shader_parameter("lamp_anchors",lamp_anchors)
     if plant_motion>1:
         material.set_shader_parameter("foliage",load("res://assets/textures/KasumiFoliage.png"))
         material.set_shader_parameter("foliage_kind",foliage_kind)
@@ -233,7 +247,7 @@ func _process(delta: float) -> void:
 
 func _composition(id: String) -> void:
     # Reproducible art review views use the same production camera and renderer.
-    var views := {"fields":[Vector3(17,0,39),-.86,.055],"wheat":[Vector3(-16,0,21),.93,.04],"back":[Vector3(0,0,17),PI,.025],"shrine":[Vector3(17,0,-49),.55,-.10],"edge":[Vector3(82,0,69),-2.18,-.03],"walls":[Vector3(-14,0,8),-.37,-.32],"tree":[Vector3(-17,0,24),-.5,.43],"ground":[Vector3(-13,0,37),-.4,-.45]}
+    var views := {"laundry":[Vector3(-2,0,-16.5),1.83,.24],"moon":[Vector3(-16,0,21),.445,.40],"fields":[Vector3(17,0,39),-.86,.055],"wheat":[Vector3(-16,0,21),.93,.04],"back":[Vector3(0,0,17),PI,.025],"shrine":[Vector3(17,0,-49),.55,-.10],"edge":[Vector3(82,0,69),-2.18,-.03],"walls":[Vector3(-14,0,8),-.37,-.32],"tree":[Vector3(-17,0,24),-.5,.43],"ground":[Vector3(-13,0,37),-.4,-.45]}
     if not views.has(id):return
     var spec: Array = views[id]
     var p: Vector3 = spec[0]

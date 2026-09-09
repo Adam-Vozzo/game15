@@ -4,7 +4,7 @@ var grid: GridContainer
 var cards: Array[Control] = []
 var header: Label
 var caption: Label
-var clock_label: Label
+var clock_label: Control
 var date_label: Label
 var sound_button: Button
 var instruction: Label
@@ -43,7 +43,7 @@ func _ready() -> void:
     add_child(grid)
     for id in Session.SCENES:
         cards.append(_channel(id))
-    for i in range(9):
+    for i in range(12-Session.SCENES.size()):
         var placeholder := Panel.new()
         placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
         placeholder.add_theme_stylebox_override("panel",_panel(Color(.91,.925,.93,.3),Color(.70,.75,.77,.55),2))
@@ -58,12 +58,14 @@ func _ready() -> void:
         grid.add_child(placeholder)
         cards.append(placeholder)
     footer_rule = ColorRect.new()
-    footer_rule.color = Color(.66,.72,.75,.5)
+    footer_rule.material = ShaderMaterial.new()
+    footer_rule.material.shader = load("res://shaders/menu_dock.gdshader")
     footer_rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(footer_rule)
     instruction = _label("Choose a place. Stay a while.",14,Color(.41,.49,.52))
-    clock_label = _label("",37,Color(.36,.43,.47))
-    clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    clock_label = load("res://scripts/menu_clock.gd").new()
+    add_child(clock_label)
+
     date_label = _label("",13,Color(.50,.57,.59))
     date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     sound_button = Button.new()
@@ -74,6 +76,7 @@ func _ready() -> void:
     sound_button.add_theme_stylebox_override("normal",_panel(Color(.94,.97,.98),Color(.64,.75,.80),2,28))
     sound_button.add_theme_stylebox_override("hover",_panel(Color(.98,1,1),Color(.25,.72,.90),2,28))
     sound_button.add_theme_stylebox_override("focus",_panel(Color(0,0,0,0),Color(.25,.72,.90),3,28))
+    sound_button.add_theme_stylebox_override("pressed",_panel(Color(.84,.94,.98),Color(.25,.72,.90),2,28))
     sound_button.pressed.connect(_toggle_sound)
     add_child(sound_button)
     audio = AudioStreamPlayer.new()
@@ -92,7 +95,8 @@ func _ready() -> void:
     get_viewport().size_changed.connect(_resize,CONNECT_DEFERRED)
     _resize()
     _update_clock()
-    print("CHANNEL_MENU_READY: three experiences available")
+    if Session.return_image: call_deferred("_return_animation")
+    print("CHANNEL_MENU_READY: four experiences available")
 
 func _panel(fill: Color, border: Color, width := 2, radius := 16) -> StyleBoxFlat:
     var panel := StyleBoxFlat.new()
@@ -124,44 +128,65 @@ func _channel(id: String) -> Button:
     button.add_theme_stylebox_override("hover",_panel(Color(1,1,1),Color(.22,.74,.94),4))
     button.add_theme_stylebox_override("pressed",_panel(Color(.87,.96,1),Color(.17,.66,.86),4))
     button.add_theme_stylebox_override("focus",_panel(Color(0,0,0,0),Color(.22,.74,.94),3))
-    var margin := MarginContainer.new()
-    margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    for side in ["left","right","top","bottom"]:
-        margin.add_theme_constant_override("margin_"+side,7)
-    margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    button.add_child(margin)
-    var column := VBoxContainer.new()
-    column.add_theme_constant_override("separation",4)
-    column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    margin.add_child(column)
     var picture := TextureRect.new()
     if ResourceLoader.exists(data.image): picture.texture = load(data.image)
     picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-    picture.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    picture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    picture.offset_left = 3
+    picture.offset_top = 3
+    picture.offset_right = -3
+    picture.offset_bottom = -3
     picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    picture.clip_contents = true
-    column.add_child(picture)
+    var tile_material := ShaderMaterial.new()
+    tile_material.shader = load("res://shaders/channel_tile.gdshader")
+    picture.material = tile_material
+    picture.resized.connect(func(): tile_material.set_shader_parameter("panel_size",picture.size))
+    button.add_child(picture)
+    var strip := PanelContainer.new()
+    strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    strip.anchor_left = 0
+    strip.anchor_right = 1
+    strip.anchor_top = .5
+    strip.anchor_bottom = .5
+    strip.offset_top = -20
+    strip.offset_bottom = 20
+    strip.offset_left = 4
+    strip.offset_right = -4
+    var shade := StyleBoxFlat.new()
+    shade.bg_color = Color(0,0,0,.60)
+    strip.add_theme_stylebox_override("panel",shade)
+    strip.modulate.a = 0
+    button.add_child(strip)
     var title := Label.new()
     title.text = data.title
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    title.add_theme_font_size_override("font_size",15)
-    title.add_theme_color_override("font_color",Color(.35,.43,.47))
+    title.add_theme_font_size_override("font_size",18)
+    title.add_theme_color_override("font_color",Color.WHITE)
     title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
     title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    column.add_child(title)
+    strip.add_child(title)
+    var hover := func(on: bool):
+        var tween := create_tween()
+        tween.tween_property(strip,"modulate:a",1. if on else 0.,.16)
+    button.mouse_entered.connect(hover.bind(true))
+    button.mouse_exited.connect(hover.bind(false))
+    button.focus_entered.connect(hover.bind(true))
+    button.focus_exited.connect(hover.bind(false))
     button.pressed.connect(func(): _launch(id))
     grid.add_child(button)
     return button
 
 func _launch(id: String) -> void:
-    if launching: return
+    if launching or Session.transitioning: return
     launching = true
-    Session.last_scene = id
-    fade.mouse_filter = Control.MOUSE_FILTER_STOP
-    var tween := create_tween()
-    tween.tween_property(fade,"color:a",1.0,.30)
-    tween.tween_callback(func(): get_tree().change_scene_to_file(Session.SCENES[id].path))
+    var card := grid.get_node(id.capitalize()+"Channel") as Control
+    Session.enter_channel(id,card.get_global_rect(),load(Session.SCENES[id].image))
+
+func _return_animation() -> void:
+    await get_tree().process_frame
+    var card := grid.get_node(Session.last_scene.capitalize()+"Channel") as Control
+    Session.finish_return(card.get_global_rect())
 
 func _toggle_sound() -> void:
     Session.sound_enabled = not Session.sound_enabled
@@ -178,54 +203,44 @@ func _resize() -> void:
     var narrow := screen.x < 700
     var short := screen.y < 540
     var columns := 2 if narrow else 4
-    var rows := 2 if narrow or short else 3
-    var margin := 22.0 if narrow else clampf(screen.x*.06,36,110)
-    var top := 112.0 if narrow else 122.0
-    var bottom := 165.0 if narrow else 160.0
-    if short:
-        top = 72
-        bottom = 84
-        columns = 3 if narrow else 4
-        rows = 1
+    var rows := 2 if narrow else (1 if short else 3)
+    var margin := 22.0 if narrow else screen.x*.06
+    var top := 24.0 if short else 44.0
+    var bottom := 100.0 if short else 170.0
     grid.columns = columns
+    var card_size := Vector2((screen.x-margin*2.-18.*(columns-1))/columns,(screen.y-top-bottom-18.*(rows-1))/rows)
     grid.position = Vector2(margin,top)
-    var card_size := Vector2((screen.x-margin*2-18*(columns-1))/columns,(screen.y-top-bottom-18*(rows-1))/rows)
-    card_size.y = minf(card_size.y,card_size.x*.625+35 if narrow else 180)
-    card_size.y = maxf(card_size.y,78)
-    grid.position.y += maxf(0,(screen.y-top-bottom-card_size.y*rows-18*(rows-1))*.5)
     for i in range(cards.size()):
         cards[i].visible = i < columns*rows
         cards[i].custom_minimum_size = card_size
     grid.reset_size()
-    header.position = Vector2(margin,30 if not short else 10)
-    caption.position = Vector2(margin+2,78 if not short else 54)
-    caption.add_theme_font_size_override("font_size",9 if narrow else 11)
-    footer_rule.position = Vector2(0,screen.y-bottom+(0 if short else 28))
-    footer_rule.size = Vector2(screen.x,1)
-    clock_label.position = Vector2(screen.x*.5-100,screen.y-(122 if narrow else 116))
-    clock_label.size = Vector2(200,48)
-    date_label.position = clock_label.position+Vector2(0,48)
-    date_label.size = Vector2(200,24)
-    instruction.position = Vector2(margin,screen.y-78)
-    instruction.visible = not narrow and not short
-    sound_button.size = Vector2(145,48)
-    sound_button.position = Vector2(screen.x-margin-145,screen.y-88)
+    header.hide()
+    caption.hide()
+    instruction.hide()
+    footer_rule.position = Vector2(0,screen.y-bottom+4)
+    footer_rule.size = Vector2(screen.x,bottom-4)
+    footer_rule.material.set_shader_parameter("panel_size",footer_rule.size)
+    clock_label.position = Vector2(screen.x*.5-100,screen.y-bottom+(13 if short else 21))
+    clock_label.size = Vector2(200,48 if not short else 35)
+    date_label.position = Vector2(screen.x*.5-115,screen.y-52)
+    date_label.size = Vector2(230,30)
+    date_label.add_theme_font_size_override("font_size",20 if not short else 15)
+    sound_button.size = Vector2(128,44)
+    sound_button.position = Vector2(screen.x-margin-128,screen.y-(70 if short else 94))
     if narrow:
-        sound_button.size = Vector2(128,40)
-        sound_button.position = Vector2(screen.x*.5-64,screen.y-48)
-        clock_label.position.y -= 22
-        date_label.position.y -= 22
-    if short:
-        clock_label.position.y = screen.y-78
-        date_label.position.y = screen.y-32
-        sound_button.position.y = screen.y-65
+        sound_button.size = Vector2(100,40)
+        sound_button.position = Vector2(screen.x-112,screen.y-58)
+        date_label.position.x = 12
+        date_label.size.x = screen.x-130
+        date_label.add_theme_font_size_override("font_size",15)
+        date_label.position.y = screen.y-41
 
 func _update_clock() -> void:
     var now := Time.get_datetime_dict_from_system()
     clock_label.text = "%02d:%02d" % [now.hour,now.minute]
     var weekdays := ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
     var months := ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    date_label.text = "%s, %d %s" % [weekdays[now.weekday],now.day,months[now.month-1]]
+    date_label.text = "%s  %d/%d" % [weekdays[now.weekday].left(3),now.month,now.day]
 
 func _process(delta: float) -> void:
     if not Session.reduced_motion: elapsed += delta

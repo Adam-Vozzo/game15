@@ -4,7 +4,10 @@ var view: SubViewport
 var world: Node3D
 var camera: Camera3D
 var ui: Control
-var controls: HBoxContainer
+var controls: VBoxContainer
+var settings_button: Button
+var settings_open := false
+var settings_tween: Tween
 var touch: Control
 var mist: ShaderMaterial
 var grass_material: ShaderMaterial
@@ -13,7 +16,6 @@ var audio: AudioStreamPlayer
 var time := 0.0
 var paused := false
 var sound_on := false
-var hidden_ui := false
 var dragging := false
 var heading := 0.0
 var pitch := 0.035
@@ -28,7 +30,6 @@ var top_label: Label
 var subtitle: Label
 var footer: Label
 var hint: Label
-var hide_button: Button
 var rng := RandomNumberGenerator.new()
 var experience_id := "moor"
 var bounds := Vector4(-44,44,-72,24)
@@ -71,9 +72,9 @@ func _ready() -> void:
     _resize()
     if clean_capture:
         ui.hide()
-        hide_button.hide()
         menu_button.hide()
         touch.hide()
+        settings_button.hide()
     print("HOLLOW_READY: Blender assets loaded, Godot atmosphere active")
 
 func _create_view() -> void:
@@ -227,7 +228,7 @@ func _create_interface() -> void:
     subtitle = _label("THE STILL MOOR", 12, Color(.58,.67,.63))
     footer = _label("Where the wind remains", 23, Color(.78,.84,.79))
     hint = _label("DRAG TO LOOK  ·  WASD TO WANDER", 12, Color(.60,.69,.63))
-    controls = HBoxContainer.new()
+    controls = VBoxContainer.new()
     controls.add_theme_constant_override("separation", 8)
     ui.add_child(controls)
     var sound_button := _button("Sound off", func():
@@ -245,20 +246,23 @@ func _create_interface() -> void:
     _button("Reset", _reset)
     controls.get_child(0).text = "Sound on" if sound_on else "Sound off"
     menu_button = Button.new()
-    menu_button.text = "Channels"
-    menu_button.tooltip_text = "Return to the main menu (Esc)"
+    menu_button.text = "Leave"
+    menu_button.tooltip_text = "Return to the main menu"
     menu_button.custom_minimum_size = Vector2(96,44)
     menu_button.flat = true
     menu_button.add_theme_font_size_override("font_size",14)
     menu_button.pressed.connect(_return_to_menu)
     add_child(menu_button)
-    hide_button = Button.new()
-    hide_button.text = "Hide controls"
-    hide_button.flat = true
-    hide_button.custom_minimum_size = Vector2(120,44)
-    hide_button.add_theme_font_size_override("font_size", 12)
-    hide_button.pressed.connect(_toggle_ui)
-    add_child(hide_button)
+    settings_button = Button.new()
+    settings_button.icon = load("res://assets/ui/settings.svg")
+    settings_button.add_theme_constant_override("icon_max_width",24)
+    settings_button.tooltip_text = "Settings (Esc releases the cursor)"
+    settings_button.add_theme_font_size_override("font_size",25)
+    settings_button.custom_minimum_size = Vector2(44,44)
+    settings_button.flat = true
+    settings_button.pressed.connect(_toggle_settings)
+    add_child(settings_button)
+    controls.hide()
     touch = TouchControls.new()
     touch.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     touch.movement_changed.connect(func(value: Vector2): walking = value)
@@ -296,43 +300,48 @@ func _resize() -> void:
     view.size = Vector2i(screen * ratio)
     camera.keep_aspect = Camera3D.KEEP_WIDTH if screen.x < screen.y else Camera3D.KEEP_HEIGHT
     camera.fov = 72 if screen.x < screen.y else 61
-    var narrow := screen.x < 720
-    top_label.add_theme_font_size_override("font_size",20 if screen.x < 500 else 29)
-    top_label.position = Vector2(30,28)
-    subtitle.position = Vector2(32,69)
-    footer.position = Vector2(32,screen.y - (240 if narrow else 109))
-    hint.position = footer.position + Vector2(0,40)
-    hint.text = "LEFT THUMB TO WALK  ·  DRAG TO LOOK" if mobile else "DRAG TO LOOK  ·  WASD TO WANDER"
+    for label in [top_label,subtitle,footer,hint]: label.hide()
+    settings_button.position = Vector2(screen.x-54,screen.y-56)
+    settings_button.size = Vector2(44,44)
+    menu_button.position = Vector2(screen.x-136,screen.y-56)
+    menu_button.custom_minimum_size = Vector2(76,44)
+    menu_button.size = Vector2(76,44)
+    controls.custom_minimum_size.x = 150
     controls.reset_size()
-    controls.position = Vector2(screen.x-controls.size.x-26,screen.y-93)
-    if screen.x < 500 and screen.y > 480:
-        controls.position.y = screen.y-205
-        footer.position.y = screen.y-310
-        hint.position.y = footer.position.y+40
-    hide_button.position = Vector2(screen.x-150,screen.y-45)
-    menu_button.position = Vector2(screen.x-122,22)
-    if screen.y < 480:
-        footer.visible = false
-        hint.visible = false
-        subtitle.visible = false
-    else:
-        footer.visible = not hidden_ui
-        hint.visible = not hidden_ui
-        subtitle.visible = not hidden_ui
-    touch.blocked_rects = [controls.get_global_rect(),hide_button.get_global_rect(),menu_button.get_global_rect()]
+    controls.position = Vector2(screen.x-164,screen.y-68-controls.size.y)
+    _update_control_exclusions()
     dragging = false
 
-func _toggle_ui() -> void:
-    hidden_ui = not hidden_ui
-    ui.visible = not hidden_ui
-    hide_button.text = "Show controls" if hidden_ui else "Hide controls"
-    touch.blocked_rects = [hide_button.get_global_rect(),menu_button.get_global_rect()] if hidden_ui else [controls.get_global_rect(),hide_button.get_global_rect(),menu_button.get_global_rect()]
+func _update_control_exclusions() -> void:
+    touch.blocked_rects = [menu_button.get_global_rect(),settings_button.get_global_rect()]
+    if settings_open: touch.blocked_rects.append(Rect2(controls.position,controls.size))
+
+func _toggle_settings() -> void:
+    settings_open = not settings_open
+    if settings_tween: settings_tween.kill()
+    controls.show()
+    controls.pivot_offset = Vector2(controls.size.x,controls.size.y)
+    if settings_open:
+        controls.scale = Vector2(.96,.82)
+        controls.modulate.a = 0
+    settings_tween = create_tween().set_parallel(true)
+    settings_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+    settings_tween.tween_property(controls,"scale",Vector2.ONE if settings_open else Vector2(.96,.82),.24)
+    settings_tween.tween_property(controls,"modulate:a",1. if settings_open else 0.,.20)
+    if not settings_open: settings_tween.chain().tween_callback(controls.hide)
+    settings_tween.finished.connect(_update_control_exclusions)
+    _update_control_exclusions()
 
 func _return_to_menu() -> void:
+    if Session.transitioning: return
+    Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
     dragging = false
     walking = Vector2.ZERO
     if audio: audio.stop()
     if touch: touch.reset_input()
+    Session.return_image = load(Session.SCENES[experience_id].image) if DisplayServer.get_name()=="headless" else ImageTexture.create_from_image(view.get_texture().get_image())
+    Session.transitioning = true
+    Session.show_cover(Session.return_image,Rect2(Vector2.ZERO,Vector2(Session.display_size())))
     get_tree().call_deferred("change_scene_to_file","res://menu.tscn")
 
 func _reset() -> void:
@@ -346,21 +355,25 @@ func _look(delta: Vector2) -> void:
     target_heading -= delta.x*.0025
     target_pitch = clampf(target_pitch-delta.y*.0025,-.65,.65)
 
+func _input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and event.physical_keycode==KEY_ESCAPE:
+        Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+        dragging = false
+        walking = Vector2.ZERO
+        get_viewport().set_input_as_handled()
+
 func _unhandled_input(event: InputEvent) -> void:
     # GUI buttons receive emulated mouse taps; touch camera input is handled once.
     if event is InputEventMouse and event.device == -1: return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
         dragging = event.pressed
-    elif event is InputEventMouseMotion and dragging:
+        if event.pressed and not mobile: Session.capture_pointer()
+    elif event is InputEventMouseMotion and (dragging or Input.mouse_mode==Input.MOUSE_MODE_CAPTURED):
         _look(event.relative)
-    elif event is InputEventKey and event.pressed and not event.echo:
-        if event.physical_keycode == KEY_ESCAPE:
-            _return_to_menu()
-        if event.physical_keycode == KEY_H:
-            _toggle_ui()
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+        Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
         dragging = false
         walking = Vector2.ZERO
 
