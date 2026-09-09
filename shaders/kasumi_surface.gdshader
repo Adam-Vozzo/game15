@@ -8,11 +8,21 @@ uniform float scene_time = 0.0;
 uniform float cloth = 0.0;
 uniform float plant = 0.0;
 uniform float mountain = 0.0;
+uniform float terrain_surface = 0.0;
 #include "res://shaders/kasumi_sky.gdshaderinc"
 varying vec3 world_p;
 varying vec3 world_n;
 varying vec3 vertex_light;
-varying vec3 affine_uv;
+
+vec3 ground_patch(vec2 p,vec2 cell,float column){
+    vec2 offset=vec2(khash(vec3(cell,2.)),khash(vec3(cell,7.)))*17.;
+    vec2 uv=p*.58+offset;
+    return texture(atlas,vec2(column*.5,0.)+(fract(uv)*126.+1.)/256.).rgb;
+}
+vec3 ground_pigment(vec2 p,float column){
+    vec2 cell=floor(p*.24),f=fract(p*.24);f=f*f*(3.-2.*f);
+    return mix(mix(ground_patch(p,cell,column),ground_patch(p,cell+vec2(1,0),column),f.x),mix(ground_patch(p,cell+vec2(0,1),column),ground_patch(p,cell+vec2(1,1),column),f.x),f.y);
+}
 
 void vertex() {
     vec3 anchor = MODEL_MATRIX[3].xyz;
@@ -32,18 +42,24 @@ void vertex() {
     world_n = normalize(mat3(MODEL_MATRIX)*NORMAL);
     float facing = max(dot(world_n,normalize(vec3(-.35,.75,-.40))),0.);
     float sky_fill = .43+.10*max(world_n.y,0.);
-    vertex_light = vec3(.80,.90,.96)*(sky_fill+facing*.48)*COLOR.rgb;
-    vec4 clip = PROJECTION_MATRIX*MODELVIEW_MATRIX*vec4(VERTEX,1.);
-    affine_uv = vec3(UV*clip.w,clip.w);
+    vertex_light = vec3(.80,.90,.96)*(sky_fill+facing*.48)*(terrain_surface>.5?vec3(.94):COLOR.rgb);
 }
 void fragment() {
-    // Small modeled modules constrain affine distortion, as tessellation did on PS1.
-    vec2 uv = affine_uv.xy/affine_uv.z;
+    // Perspective-correct object UVs keep architectural details fixed during motion.
+    vec2 uv = UV;
     if ((tile==4 || tile==5) && world_n.y>.6) { uv=world_p.xz*.72; }
     vec2 origin = vec2(float(tile%2),float((tile%4)/2))*.5;
     vec2 sample_uv = origin+(fract(uv)*126.+1.)/256.;
     vec3 pigment = texture(atlas,sample_uv).rgb;
-    if(plant>1.5){
+    if(terrain_surface>.5){
+        float outskirts=smoothstep(10.,21.,abs(world_p.x));
+        float path=1.-smoothstep(1.0,3.2,min(abs(world_p.z-17.),abs(world_p.z+51.)));
+        float growth=knoise(vec3(world_p.x*.11,3.,world_p.z*.11));
+        float moss=outskirts*(1.-path*.80)*smoothstep(.23,.76,growth);
+        pigment=mix(ground_pigment(world_p.xz,0.),ground_pigment(world_p.xz,1.),moss*.73);
+        pigment*=.92+.14*knoise(world_p*.08);
+    }
+    if(plant>1.5 && tile==11){
         vec2 cell=vec2(float(foliage_kind%2),float(foliage_kind/2))*.5;
         vec4 leaf=texture(foliage,cell+(clamp(UV,vec2(0.),vec2(1.))*126.+1.)/256.);
         if(leaf.a<.5){discard;}

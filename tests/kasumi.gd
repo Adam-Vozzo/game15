@@ -20,6 +20,15 @@ func run() -> void:
         check(not town.can_walk(Vector3(r[0]+r[2]*.5,0,r[1]+r[3]*.5)),"Each modeled building footprint must block walking")
     for z in range(-95,85):
         check(town.can_walk(Vector3(0,0,z)),"The main lane must stay connected")
+    check(town.layout.walk_surfaces.size()==7,"Shrine needs six steps and a solid landing")
+    for surface in town.layout.walk_surfaces:
+        var r: Array = surface.rect
+        var x: float = r[0]+r[2]*.5
+        var z: float = r[1]+r[3]*.5
+        check(absf(town.surface_height(x,z)-surface.height)<.001,"Shrine walking height must follow the modeled steps and landing")
+        check(town._on_shrine(x,z),"Shrine masonry must exclude garden vegetation")
+    for r in town.layout.obstacles:
+        check(not town.can_walk(Vector3(r[0]+r[2]*.5,0,r[1]+r[3]*.5)),"Solid garden walls and shrine body must block walking")
     for field in town.fields:
         var r: Array = field.rect
         var x: float = r[0]+r[2]*.5

@@ -3,6 +3,7 @@ extends "res://scripts/main.gd"
 var layout: Dictionary
 var fields: Array
 var footprints: Array[Rect2] = []
+var obstacles: Array[Rect2] = []
 var moving_materials: Array[ShaderMaterial] = []
 var materials: Dictionary = {}
 var plant_meshes: Dictionary = {}
@@ -17,6 +18,8 @@ func _ready() -> void:
     for building in layout.buildings:
         var r: Array = building.rect
         footprints.append(Rect2(r[0],r[1],r[2],r[3]).grow(.15))
+    for r in layout.obstacles:
+        obstacles.append(Rect2(r[0],r[1],r[2],r[3]))
     super._ready()
     for argument in OS.get_cmdline_user_args():
         if argument.begins_with("--view="):
@@ -27,6 +30,9 @@ func _base_height(x: float,z: float) -> float:
     return .03+maxf(0,-z)*.007+sin(x*.032)*sin(z*.033)*.07
 
 func surface_height(x: float,z: float) -> float:
+    for surface in layout.walk_surfaces:
+        var r: Array = surface.rect
+        if Rect2(r[0],r[1],r[2],r[3]).has_point(Vector2(x,z)):return surface.height
     for field in fields:
         var r: Array = field.rect
         if Rect2(r[0],r[1],r[2],r[3]).has_point(Vector2(x,z)):
@@ -35,6 +41,8 @@ func surface_height(x: float,z: float) -> float:
 
 func can_walk(point: Vector3) -> bool:
     for rect in footprints:
+        if rect.has_point(Vector2(point.x,point.z)): return false
+    for rect in obstacles:
         if rect.has_point(Vector2(point.x,point.z)): return false
     return true
 
@@ -66,6 +74,10 @@ func _create_environment() -> void:
             if "Mountain_rim" in node.name:
                 var material: ShaderMaterial = _material(tile).duplicate()
                 material.set_shader_parameter("mountain",1.0)
+                node.set_surface_override_material(i,material)
+            elif "Valley_floor" in node.name:
+                var material: ShaderMaterial = _material(4).duplicate()
+                material.set_shader_parameter("terrain_surface",1.0)
                 node.set_surface_override_material(i,material)
             else:
                 node.set_surface_override_material(i,_material(tile,cloth_motion))
@@ -124,7 +136,7 @@ func _create_vegetation() -> void:
         var trees: Array[Transform3D] = []
         for tree in layout.trees:
             if int(tree[4])==kind: trees.append(_transform_at(tree[0],tree[1],tree[2],tree[3],tree[5]))
-        _instances("Tree_%d_trunk"%kind,trees,10,0)
+        _instances("Tree_%d_trunk"%kind,trees,10,2)
         _instances("Tree_%d_crown"%kind,trees,11,2)
     for field in fields:
         var r: Array = field.rect
@@ -154,7 +166,7 @@ func _create_vegetation() -> void:
                 if rect.has_point(Vector2(x,z)):
                     on_bank = true
                     break
-            if on_bank or not can_walk(Vector3(x,0,z)):continue
+            if on_bank or not can_walk(Vector3(x,0,z)) or _on_shrine(x,z):continue
             tufts.append(_transform_at(x,surface_height(x,z),z,rng.randf_range(.60,1.8)))
         for i in range(45):
             var z := -70.+row*17.+rng.randf()*3.
@@ -167,7 +179,7 @@ func _create_vegetation() -> void:
         for i in range(1400 if mobile else 2400):
             var x: float = side*rng.randf_range(10.0,18.0)
             var z := rng.randf_range(-80,76)
-            if absf(z-17)<1.8 or absf(z+51)<1.8 or not can_walk(Vector3(x,0,z)):continue
+            if absf(z-17)<1.8 or absf(z+51)<1.8 or not can_walk(Vector3(x,0,z)) or _on_shrine(x,z):continue
             garden.append(_transform_at(x,surface_height(x,z),z,rng.randf_range(.7,1.75)))
         _instances("Verge",garden,11,1)
 
@@ -181,6 +193,12 @@ func _create_camera() -> void:
     mist.shader = load("res://shaders/kasumi_atmosphere.gdshader")
     mist.set_shader_parameter("fog_steps",20 if mobile else 28)
     mist.set_shader_parameter("ao_strength",.68)
+
+func _on_shrine(x: float,z: float) -> bool:
+    for surface in layout.walk_surfaces:
+        var r: Array = surface.rect
+        if Rect2(r[0],r[1],r[2],r[3]).grow(.18).has_point(Vector2(x,z)):return true
+    return false
 
 func _create_interface() -> void:
     super._create_interface()
@@ -205,7 +223,7 @@ func _process(delta: float) -> void:
 
 func _composition(id: String) -> void:
     # Reproducible art review views use the same production camera and renderer.
-    var views := {"fields":[Vector3(17,0,39),-.86,.055],"wheat":[Vector3(-16,0,21),.93,.04],"back":[Vector3(0,0,17),PI,.025],"shrine":[Vector3(10,0,-48),-.36,.015],"edge":[Vector3(82,0,69),-2.18,-.03]}
+    var views := {"fields":[Vector3(17,0,39),-.86,.055],"wheat":[Vector3(-16,0,21),.93,.04],"back":[Vector3(0,0,17),PI,.025],"shrine":[Vector3(17,0,-49),.55,-.10],"edge":[Vector3(82,0,69),-2.18,-.03],"walls":[Vector3(-14,0,8),-.37,-.32],"tree":[Vector3(-17,0,24),-.5,.43],"ground":[Vector3(-13,0,37),-.4,-.45]}
     if not views.has(id):return
     var spec: Array = views[id]
     var p: Vector3 = spec[0]

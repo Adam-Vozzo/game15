@@ -60,7 +60,7 @@ class Mesh:
         for a,b in zip(points,points[1:]):self.beam(a,b,r,mat,shade=shade,steps=4)
     def stone(self,p,s,mat=3,shade=1):
         x,y,z=p;sx,sy,sz=s
-        ring=[(x+math.cos(i*math.tau/7)*sx*random.uniform(.83,1.12),y+sy*.3,z+math.sin(i*math.tau/7)*sz*random.uniform(.83,1.12)) for i in range(7)]
+        ring=[(x+math.cos(i*math.tau/7)*sx*random.uniform(.83,1.12),y-.025,z+math.sin(i*math.tau/7)*sz*random.uniform(.83,1.12)) for i in range(7)]
         upper=[(x+(px-x)*.68,y+sy*random.uniform(.8,1.1),z+(pz-z)*.68) for px,_,pz in ring]
         for i in range(7):j=(i+1)%7;self.face([ring[i],ring[j],upper[j],upper[i]],mat,shade)
         self.face(upper,mat,shade)
@@ -76,7 +76,7 @@ class Mesh:
         ob=bpy.data.objects.new(self.name,data);bpy.context.collection.objects.link(ob);ob.location=xyz(origin)
         return ob
 
-layout={'version':2,'bounds':[-93,93,-112,91],'buildings':[],'fields':[],'trees':[],'atlas':NAMES}
+layout={'version':3,'bounds':[-93,93,-112,91],'buildings':[],'fields':[],'trees':[],'atlas':NAMES,'obstacles':[],'walk_surfaces':[]}
 # Fields share exactly the same layout with the walk surface and plant instancing.
 for side in [-1,1]:
     for row,z in enumerate([-58,-32,-6,20,46]):
@@ -339,9 +339,17 @@ for side in [-1,1]:
     x=side*11.7
     for z in range(-65,40,2):
         if -20<z<-14 or 14<z<22 or -55<z<-48:continue
+        if side==1 and -61<z<-51:continue # Leave the shrine landing and approach clear.
         y=base_h(x,z)
-        garden.stone((x,y,z),(.36,.48,.95),3,.74)
-        garden.box((x,y+.44,z),(.69,.10,1.83),5,.84)
+        # A continuous mortared core with fitted courses, buried below the soil.
+        garden.box((x,y+.21,z),(.62,.58,2.02),3,.78)
+        for row in range(2):
+            for block in range(3):
+                zz=z-.68+block*.67+(row%2)*.06
+                for face in [-1,1]:
+                    garden.box((x+face*.31,y+.10+row*.24,zz),(.07,.215,.63),3,.80+random.random()*.08)
+        garden.box((x,y+.51,z),(.65,.065,2.02),5,.82)
+        layout['obstacles'].append([x-.39,z-1.01,.78,2.02])
     # A rough bamboo boundary beside the southern plots.
     for z in range(35,74,3):
         y=base_h(side*17,z)
@@ -366,13 +374,26 @@ garden.finish()
 
 # Wayside shrine, steps, rope, votive stones and crops interrupted by a field path.
 shrine=Mesh('Inari_wayside_shrine');sx,sz=12,-53
-for j in range(6):shrine.box((sx,.16+j*.13,sz-j*.43),(2.25,.18,.50),3,.80)
-for x in [sx-.86,sx+.86]:shrine.beam((x,.65,sz-2.3),(x,3.65,sz-2.3),.115,13,r2=.09)
-shrine.box((sx,3.27,sz-2.3),(2.55,.15,.19),13,.78)
-shrine.box((sx,3.70,sz-2.3),(3.05,.20,.28),14,.87)
-shrine.box((sx,1.55,sz-4.2),(1.25,1.25,1.15),0,.7)
-roof(shrine,sx,2.2,sz-4.2,1.8,1.7,.55)
-for j in range(5):shrine.stone((sx-1.8+j*.8,.72,sz-5.7),(.23,.55,.24),3,.70)
+soil=base_h(sx,sz);platform=soil+.78
+# Solid stepped masonry fills the space from the soil to the shrine's floor.
+for j in range(6):
+    top=soil+(j+1)*.13;bottom=base_h(sx,sz-j*.43)-.10
+    shrine.box((sx,(bottom+top)*.5,sz-j*.43),(2.25,top-bottom,.50),3,.86)
+    layout['walk_surfaces'].append({'rect':[sx-1.125,sz-j*.43-.25,2.25,.50],'height':top})
+bottom=base_h(sx,sz-4.4)-.12
+shrine.box((sx,(bottom+platform)*.5,sz-4.4),(3.8,platform-bottom,4.8),3,.82)
+shrine.box((sx,platform-.04,sz-4.4),(3.86,.08,4.86),3,.96)
+layout['walk_surfaces'].insert(0,{'rect':[sx-1.93,sz-6.83,3.86,4.86],'height':platform})
+for x in [sx-.86,sx+.86]:
+    shrine.box((x,platform+.07,sz-2.3),(.38,.14,.38),3,.82)
+    shrine.beam((x,platform+.13,sz-2.3),(x,platform+3.05,sz-2.3),.115,13,r2=.09)
+shrine.box((sx,platform+2.68,sz-2.3),(2.55,.15,.19),13,.78)
+shrine.box((sx,platform+3.10,sz-2.3),(3.05,.20,.28),14,.87)
+shrine.box((sx,platform+.10,sz-4.2),(1.45,.20,1.35),3,.85)
+shrine.box((sx,platform+.825,sz-4.2),(1.25,1.25,1.15),0,.7)
+roof(shrine,sx,platform+1.45,sz-4.2,1.8,1.7,.55)
+for j in range(5):shrine.stone((sx-1.48+j*.74,platform,sz-5.9),(.20,.45,.22),3,.70)
+layout['obstacles'].append([sx-.85,sz-4.95,1.7,1.5])
 shrine.finish()
 
 # Continuous nested ridgelines are sculpted profiles, with different valley notches.
@@ -422,14 +443,24 @@ for kind in range(3):
     for j in range(19 if kind==0 else 14):
         a=j*2.399+kind;yy=ht*(.3+j/(29 if kind==0 else 22));span=(1-j/26)*2.1 if kind==0 else random.uniform(1.1,2.5)
         end=Vector((math.cos(a)*span,yy+.3,math.sin(a)*span))
-        trunk.beam((lean*yy/ht,yy-.2,0),end,.055,10,r2=.012,shade=.72)
+        branch_root=Vector((lean*yy/ht,yy-.2,0))
+        trunk.beam(branch_root,end,.055,10,r2=.012,shade=.72)
         # Angled branch cards combine authored transparent foliage into a volume.
         # Each card costs two triangles; its fine silhouette comes from the texture.
         for fan in range(3):
-            angle=a+fan*1.47;center=end+Vector((math.cos(angle)*.25,fan*.14,math.sin(angle)*.25))
-            right=Vector((math.cos(angle),0,math.sin(angle)))*(.95 if kind==0 else 1.06)
-            up=Vector((-math.sin(angle)*.65,.48+fan*.18,math.cos(angle)*.65))*1.12
-            crown.face([center-right-up,center+right-up,center+right+up,center-right+up],11,random.uniform(.67,1.0),[(0,0),(1,0),(1,1),(0,1)])
+            attachment=branch_root.lerp(end,.52+fan*.23)
+            angle=a+(fan-1)*.36
+            along=Vector((math.cos(angle),.25 if kind==0 else .45,math.sin(angle))).normalized()
+            across=Vector((-math.sin(angle),0,math.cos(angle)))
+            normal=along.cross(across).normalized()
+            roll=(fan-1)*.60
+            right=(across*math.cos(roll)+normal*math.sin(roll))*(1.40 if kind==0 else 1.65)
+            up=along*(1.70 if kind==0 else 1.65)
+            # Atlas stem pixels (59,119) and (70,12), including the shader gutter.
+            corner=attachment-right*(58/126)-up*(8/126)
+            tip=attachment+right*(11/126)+up*(107/126)
+            trunk.beam(attachment,tip,.014,10,r2=.004,shade=.74,steps=4)
+            crown.face([corner,corner+right,corner+right+up,corner+up],11,random.uniform(.75,1.0),[(0,0),(1,0),(1,1),(0,1)])
     trunk_ob=trunk.finish();crown_ob=crown.finish()
     foliage=bpy.data.materials.new('K11_Foliage%d'%kind);foliage.use_nodes=True
     fn=foliage.node_tree.nodes;fl=foliage.node_tree.links;fb=fn.get('Principled BSDF')

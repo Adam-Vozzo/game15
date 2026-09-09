@@ -13,7 +13,7 @@ Three quiet places, modeled in **Blender** and rendered in **Godot 4**. A Wii-in
 ![Phuket sunset](assets/menu/coast.png)
 ![Kasumi Lane](assets/menu/town.png)
 
-All three use original modeled geometry and textures in a deliberately reduced-resolution 3D viewport. Kasumi now uses researched PS1 art constraints: four 256×256 texture pages, limited palettes, vertex-colored shelter shading and affine mapping on architectural modules. Its models prioritize silhouettes, joinery and readable detail. The moor and coast retain their existing snapping, dithering and grain; Kasumi adds no artificial vertex wobble or global film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
+All three use original modeled geometry and textures in a deliberately reduced-resolution 3D viewport. Kasumi now uses researched PS1 art constraints: four 256×256 texture pages, limited palettes, vertex-colored shelter shading and stable perspective-correct architectural UVs. Its models prioritize silhouettes, joinery and readable detail. The moor and coast retain their existing snapping, dithering and grain; Kasumi adds no artificial vertex wobble or global film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
 
 See [Kasumi's hardware research and art decisions](art/PS1_ART_DIRECTION.md), including primary hardware references and the deliberate modern extensions. This is a PS1-inspired Godot experience, not a hardware-accurate console build.
 
@@ -103,6 +103,7 @@ godot --headless --path . --script tests/run.gd
 godot --headless --path . --script tests/channels.gd
 godot --headless --path . --script tests/kasumi.gd
 godot --path . --script tests/kasumi_wind.gd
+godot --path . --script tests/kasumi_uv.gd
 node tests/validate_web.mjs
 # Imported grass root/upper-blade GPU regression, requiring a display:
 godot --path . --rendering-method gl_compatibility --script tests/grass_wind.gd
@@ -112,7 +113,7 @@ godot --path . --script tests/occlusion.gd
 godot --path . --script tests/resize.gd
 ```
 
-The build runs input tests and round trips through all three channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 18 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
+The build runs input tests and round trips through all three channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 18 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. Shrine steps and landing heights agree with the walking surface, and solid garden walls block movement. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move, and architectural UVs stay fixed across camera translation and rotation. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
 
 Physical iOS/Android devices have not been tested. Browser/GPU performance varies; touch devices use a smaller render budget and less moor vegetation. The imported world art remains the same on desktop and touch.
 
