@@ -16,13 +16,13 @@ There is no single useful “maximum polygons per model” implied by these fact
 - Native Aseprite files preserve named material layers and palettes. Cedar grain, weather streaks, ceramic tile profiles, mortar, paper, cotton and corrosion each have distinct mark-making. The Lua source regenerates these deterministic original studies; they are not hand-painted scans.
 - Geometry is spent on eave profiles, tile ridges, recessed glazing, latticework, balconies, gutters, catenary cables and readable prop silhouettes. Architecture uses perspective-correct object UVs: the earlier affine approximation caused distracting camera-dependent swimming and has been removed. Terrain blends offset earth and moss samples in world space to soften material boundaries and suppress obvious repetition.
 - Tree branches combine angled two-triangle cards with original cedar sprays, broadleaf clusters and mountain-ash leaflets from `kasumi_foliage.aseprite`. Each authored stem is anchored to a modeled twig, and branches and foliage share the same wind deformation. Transparent cutouts provide silhouette detail without large solid polygon fans.
-- The glTF `Shelter` color attribute carries designed shading beneath overhangs and around foundations. Godot interpolates vertex lighting. No added random vertex wobble or global grain is applied to Kasumi.
+- The glTF `Shelter` color attribute carries designed shading beneath overhangs and around foundations. Kasumi adds soft ground contact shading anchored to building and shrine footprints; screen-space AO is disabled to avoid view-dependent contact artifacts. Godot interpolates vertex lighting. No added random vertex wobble or global grain is applied to Kasumi.
 - Composition progresses from dark foreground joinery and a few amber lights, through a cool misty lane, to low field banks, groves, foothills and three mountain profiles. The world surrounds the walking area in all directions.
 - Crops bend from modeled roots. Cloth hangs from fixed upper edges. Rain rings, cloud drift and fog advection share the scene clock and pause together.
 
 ## Deliberate modern extensions
 
-The existing higher-resolution viewport, free camera, depth buffer, screen-space contact occlusion, shader water, ray-marched fog and instanced vegetation exceed original hardware capabilities. Keeping them is consistent with the requested fidelity. This is a researched artistic interpretation in Godot, not a claim of exact PS1 emulation. The other two channels retain their established rendering.
+The existing higher-resolution viewport, free camera, depth buffer, world-space foundation shading, shader water, ray-marched fog and instanced vegetation exceed original hardware capabilities. Keeping them is consistent with the requested fidelity. This is a researched artistic interpretation in Godot, not a claim of exact PS1 emulation. The other two channels retain their established rendering.
 
 ## Edit and regenerate
 

@@ -9,6 +9,8 @@ uniform float cloth = 0.0;
 uniform float plant = 0.0;
 uniform float mountain = 0.0;
 uniform float terrain_surface = 0.0;
+uniform vec4 shelter_bounds[20];
+uniform int shelter_count = 0;
 #include "res://shaders/kasumi_sky.gdshaderinc"
 varying vec3 world_p;
 varying vec3 world_n;
@@ -66,6 +68,18 @@ void fragment() {
         pigment=leaf.rgb;
     }
     vec3 color = pigment*vertex_light;
+    if(terrain_surface>.5){
+        // Ground contact shade is anchored to the masonry, independent of camera/depth samples.
+        float shelter=0.;
+        for(int i=0;i<20;i++){
+            if(i>=shelter_count){break;}
+            vec4 bounds=shelter_bounds[i];
+            vec2 q=abs(world_p.xz-(bounds.xy+bounds.zw*.5))-bounds.zw*.5;
+            float edge=length(max(q,vec2(0.)))+min(max(q.x,q.y),0.);
+            shelter=max(shelter,1.-smoothstep(-.08,.85,edge));
+        }
+        color*=1.-shelter*.28;
+    }
     float far_ground=smoothstep(65.,145.,length(world_p.xz));
     if (mountain>.5 || ((tile==4 || tile==5) && plant<.5)) {
         float land=sin(world_p.x*.063+sin(world_p.z*.036)*2.)*sin(world_p.z*.044)*.5+.5;

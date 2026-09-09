@@ -29,6 +29,20 @@ func run() -> void:
         check(town._on_shrine(x,z),"Shrine masonry must exclude garden vegetation")
     for r in town.layout.obstacles:
         check(not town.can_walk(Vector3(r[0]+r[2]*.5,0,r[1]+r[3]*.5)),"Solid garden walls and shrine body must block walking")
+    # Rendering two upward faces at the same height caused the shrine platform to flicker.
+    var shrine: MeshInstance3D = town.world.find_child("Inari_wayside_shrine",true,false)
+    var faces: PackedVector3Array = shrine.mesh.get_faces()
+    var top: float = town.layout.walk_surfaces[0].height
+    for point in [Vector2(10.61,-58.13),Vector2(13.31,-56.79),Vector2(12.27,-55.81)]:
+        var covers := 0
+        for i in range(0,faces.size(),3):
+            var a: Vector3 = shrine.global_transform*faces[i]
+            var b: Vector3 = shrine.global_transform*faces[i+1]
+            var c: Vector3 = shrine.global_transform*faces[i+2]
+            if absf(a.y-top)>.001 or absf(b.y-top)>.001 or absf(c.y-top)>.001:continue
+            if Geometry2D.is_point_in_polygon(point,PackedVector2Array([Vector2(a.x,a.z),Vector2(b.x,b.z),Vector2(c.x,c.z)])):covers+=1
+        print("Landing sample ",point," top=",top," faces=",covers)
+        check(covers==1,"Shrine landing must have exactly one visible top face at every sampled point")
     for field in town.fields:
         var r: Array = field.rect
         var x: float = r[0]+r[2]*.5

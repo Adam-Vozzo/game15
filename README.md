@@ -104,6 +104,7 @@ godot --headless --path . --script tests/channels.gd
 godot --headless --path . --script tests/kasumi.gd
 godot --path . --script tests/kasumi_wind.gd
 godot --path . --script tests/kasumi_uv.gd
+godot --path . --script tests/kasumi_contact.gd
 node tests/validate_web.mjs
 # Imported grass root/upper-blade GPU regression, requiring a display:
 godot --path . --rendering-method gl_compatibility --script tests/grass_wind.gd
@@ -113,7 +114,7 @@ godot --path . --script tests/occlusion.gd
 godot --path . --script tests/resize.gd
 ```
 
-The build runs input tests and round trips through all three channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 18 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. Shrine steps and landing heights agree with the walking surface, and solid garden walls block movement. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move, and architectural UVs stay fixed across camera translation and rotation. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
+The build runs input tests and round trips through all three channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 18 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. Shrine steps and landing heights agree with the walking surface, and solid garden walls block movement. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move, and architectural UVs and world-anchored foundation shading stay fixed across camera translation and rotation. Kasumi uses authored shelter shading and soft world-space contact shade instead of screen-space AO. Its shrine cap and stair treads do not overlap, avoiding coplanar flicker. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
 
 Physical iOS/Android devices have not been tested. Browser/GPU performance varies; touch devices use a smaller render budget and less moor vegetation. The imported world art remains the same on desktop and touch.
 

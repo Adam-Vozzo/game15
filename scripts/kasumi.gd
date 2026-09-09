@@ -78,6 +78,15 @@ func _create_environment() -> void:
             elif "Valley_floor" in node.name:
                 var material: ShaderMaterial = _material(4).duplicate()
                 material.set_shader_parameter("terrain_surface",1.0)
+                var shelter := PackedVector4Array()
+                for building in layout.buildings:
+                    var r: Array = building.rect
+                    shelter.append(Vector4(r[0],r[1],r[2],r[3]))
+                var landing: Array = layout.walk_surfaces[0].rect
+                shelter.append(Vector4(landing[0],landing[1],landing[2],landing[3]))
+                material.set_shader_parameter("shelter_count",shelter.size())
+                shelter.resize(20)
+                material.set_shader_parameter("shelter_bounds",shelter)
                 node.set_surface_override_material(i,material)
             else:
                 node.set_surface_override_material(i,_material(tile,cloth_motion))
@@ -192,7 +201,8 @@ func _create_camera() -> void:
     pitch = target_pitch
     mist.shader = load("res://shaders/kasumi_atmosphere.gdshader")
     mist.set_shader_parameter("fog_steps",20 if mobile else 28)
-    mist.set_shader_parameter("ao_strength",.68)
+    # Authored shelter and world-space foundation shading remain stable at close range.
+    mist.set_shader_parameter("ao_strength",0.0)
 
 func _on_shrine(x: float,z: float) -> bool:
     for surface in layout.walk_surfaces:

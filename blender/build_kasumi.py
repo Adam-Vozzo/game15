@@ -378,17 +378,25 @@ soil=base_h(sx,sz);platform=soil+.78
 # Solid stepped masonry fills the space from the soil to the shrine's floor.
 for j in range(6):
     top=soil+(j+1)*.13;bottom=base_h(sx,sz-j*.43)-.10
-    shrine.box((sx,(bottom+top)*.5,sz-j*.43),(2.25,top-bottom,.50),3,.86)
-    layout['walk_surfaces'].append({'rect':[sx-1.125,sz-j*.43-.25,2.25,.50],'height':top})
+    # Touching risers, rather than overlapping boxes with coincident side faces.
+    shrine.box((sx,(bottom+top)*.5,sz-j*.43),(2.25,top-bottom,.43),3,.86)
+    layout['walk_surfaces'].append({'rect':[sx-1.125,sz-j*.43-.215,2.25,.43],'height':top})
 bottom=base_h(sx,sz-4.4)-.12
-shrine.box((sx,(bottom+platform)*.5,sz-4.4),(3.8,platform-bottom,4.8),3,.82)
-shrine.box((sx,platform-.04,sz-4.4),(3.86,.08,4.86),3,.96)
-layout['walk_surfaces'].insert(0,{'rect':[sx-1.93,sz-6.83,3.86,4.86],'height':platform})
+# The cap replaces the core's upper 8 cm; their top faces must never coincide.
+# Its front begins at the back of the final tread, avoiding a coplanar overlap.
+landing_front=sz-5*.43-.215
+landing_back=sz-6.83
+landing_depth=landing_front-landing_back
+landing_z=(landing_front+landing_back)*.5
+core_top=platform-.085
+shrine.box((sx,(bottom+core_top)*.5,landing_z),(3.8,core_top-bottom,landing_depth-.04),3,.82)
+shrine.box((sx,platform-.04,landing_z),(3.86,.08,landing_depth),3,.96)
+layout['walk_surfaces'].insert(0,{'rect':[sx-1.93,landing_back,3.86,landing_depth],'height':platform})
 for x in [sx-.86,sx+.86]:
-    shrine.box((x,platform+.07,sz-2.3),(.38,.14,.38),3,.82)
-    shrine.beam((x,platform+.13,sz-2.3),(x,platform+3.05,sz-2.3),.115,13,r2=.09)
-shrine.box((sx,platform+2.68,sz-2.3),(2.55,.15,.19),13,.78)
-shrine.box((sx,platform+3.10,sz-2.3),(3.05,.20,.28),14,.87)
+    shrine.box((x,platform+.07,sz-2.65),(.38,.14,.38),3,.82)
+    shrine.beam((x,platform+.13,sz-2.65),(x,platform+3.05,sz-2.65),.115,13,r2=.09)
+shrine.box((sx,platform+2.68,sz-2.65),(2.55,.15,.19),13,.78)
+shrine.box((sx,platform+3.10,sz-2.65),(3.05,.20,.28),14,.87)
 shrine.box((sx,platform+.10,sz-4.2),(1.45,.20,1.35),3,.85)
 shrine.box((sx,platform+.825,sz-4.2),(1.25,1.25,1.15),0,.7)
 roof(shrine,sx,platform+1.45,sz-4.2,1.8,1.7,.55)
@@ -440,20 +448,20 @@ for kind in range(3):
     trunk=Mesh('Tree_%d_trunk'%kind);crown=Mesh('Tree_%d_crown'%kind)
     ht=9 if kind==0 else 7.5;lean=.38 if kind!=2 else -.25
     trunk.beam((0,0,0),(lean,ht*.85,0),.21,10,r2=.035,shade=.78,steps=7)
-    for j in range(19 if kind==0 else 14):
-        a=j*2.399+kind;yy=ht*(.3+j/(29 if kind==0 else 22));span=(1-j/26)*2.1 if kind==0 else random.uniform(1.1,2.5)
+    for j in range(25 if kind==0 else 19):
+        a=j*2.399+kind;yy=ht*(.24+j/(38 if kind==0 else 29));span=(1-j/34)*2.1 if kind==0 else random.uniform(1.1,2.5)
         end=Vector((math.cos(a)*span,yy+.3,math.sin(a)*span))
         branch_root=Vector((lean*yy/ht,yy-.2,0))
         trunk.beam(branch_root,end,.055,10,r2=.012,shade=.72)
         # Angled branch cards combine authored transparent foliage into a volume.
         # Each card costs two triangles; its fine silhouette comes from the texture.
-        for fan in range(3):
-            attachment=branch_root.lerp(end,.52+fan*.23)
-            angle=a+(fan-1)*.36
-            along=Vector((math.cos(angle),.25 if kind==0 else .45,math.sin(angle))).normalized()
+        for fan in range(7):
+            attachment=branch_root.lerp(end,.24+fan*.12)
+            angle=a+(-1 if fan%2 else 1)*(.30+(fan%3)*.24)
+            along=Vector((math.cos(angle),(.12 if kind==0 else .30)+(fan%3)*.13,math.sin(angle))).normalized()
             across=Vector((-math.sin(angle),0,math.cos(angle)))
             normal=along.cross(across).normalized()
-            roll=(fan-1)*.60
+            roll=((fan%3)-1)*.65
             right=(across*math.cos(roll)+normal*math.sin(roll))*(1.40 if kind==0 else 1.65)
             up=along*(1.70 if kind==0 else 1.65)
             # Atlas stem pixels (59,119) and (70,12), including the shader gutter.
