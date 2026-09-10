@@ -31,7 +31,7 @@ void fragment(){
      sum+=reservoir_beam(p)*air*step_length*exp(-(previous+step_length*.5)*.011);
      previous=end;
    }
-   col+=vec3(.59,.65,.64)*(1.-exp(-sum*.026))*shaft_strength;
+   col+=vec3(.73,.80,.83)*(1.-exp(-sum*.045))*shaft_strength;
  }
  ALBEDO=col;
 }

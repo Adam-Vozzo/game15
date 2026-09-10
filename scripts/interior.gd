@@ -4,6 +4,7 @@ var is_reservoir := false
 var layout: Dictionary
 var materials: Array[ShaderMaterial] = []
 var drums: Array[Node3D] = []
+var dryers: Array[Node3D] = []
 var cars: Array[Node3D] = []
 var water_material: ShaderMaterial
 var reflection_view: SubViewport
@@ -51,7 +52,7 @@ func can_walk(point: Vector3) -> bool:
             if _in_rect(point,rect,.24): return true
         return false
     if not _in_rect(point,layout.bounds,0.): return false
-    for key in ["bench","counter","vending","cart"]:
+    for key in ["bench","counter","vending","cart","island"]:
         if _in_rect(point,layout[key],-.28): return false
     return true
 
@@ -68,6 +69,7 @@ func _create_environment() -> void:
     for part in art.find_children("*","MeshInstance3D",true,false):
         part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
         if str(part.name).begins_with("Drum"): drums.append(part)
+        if str(part.name).begins_with("Dryer"): dryers.append(part)
         for i in range(part.mesh.get_surface_count()):
             var kind: String = part.mesh.surface_get_material(i).resource_name
             var material: ShaderMaterial
@@ -77,13 +79,16 @@ func _create_environment() -> void:
                 material = ShaderMaterial.new()
                 cache[kind] = material
                 materials.append(material)
-                if kind in ["Rain","Drip","Dust"]:
+                if kind in ["Rain","Drip","Dust","Stream","Splash"]:
                     material.shader = load("res://shaders/interior_particles.gdshader")
-                    material.set_shader_parameter("mode",["Rain","Drip","Dust"].find(kind))
+                    material.set_shader_parameter("mode",["Rain","Drip","Dust","Stream","Splash"].find(kind))
                     material.render_priority = 2
                 elif kind == "Glass":
                     material.shader = load("res://shaders/laundry_glass.gdshader")
                     material.render_priority = 4
+                elif kind == "DoorGlass":
+                    material.shader = load("res://shaders/laundry_door.gdshader")
+                    material.render_priority = 3
                 elif kind == "Water":
                     material.shader = load("res://shaders/reservoir_water.gdshader")
                     water_material = material
@@ -92,6 +97,7 @@ func _create_environment() -> void:
                     material.set_shader_parameter("reservoir",is_reservoir)
                     material.set_shader_parameter("road",kind=="Road")
                     material.set_shader_parameter("reflective_floor",kind=="Tile")
+                    material.set_shader_parameter("metallic",kind=="Metal")
                     var glowing := ["NeonPink","NeonCyan","TubeLight","Headlamp","Daylight"].find(kind)+1
                     material.set_shader_parameter("glow_kind",glowing)
                     if kind in ["Concrete","Tile","Enamel","Metal","Road"]:
@@ -100,7 +106,9 @@ func _create_environment() -> void:
             part.set_surface_override_material(i,material)
         if part.name == "ReservoirWater": part.layers = 2
         if part.name == "Tile": part.layers = 2
-        if part.name in ["BeamDust","FallingDrops"]: part.layers = 8
+        if part.name in ["BeamDust","FallingDrops","OutletStream","OutletSplash"]:
+            part.layers = 8
+            part.extra_cull_margin = 1.
         if part.name == "StreetRain": part.extra_cull_margin = 10
     if not is_reservoir:
         var car := Node3D.new()
@@ -153,6 +161,7 @@ func _create_camera() -> void:
             if argument=="--view=ceiling": camera.position=Vector3(0,2.65,-4);heading=-.44;pitch=1.34
             if argument=="--view=reverse": camera.position=Vector3(34,2.65,-82);heading=2.6;pitch=.2
             if argument=="--view=columns": camera.position=Vector3(29,2.65,-34);heading=-.5;pitch=.18
+            if argument=="--view=pipe": camera.position=Vector3(-1.45,2.65,-5.5);heading=1.14;pitch=-.25
         else:
             if argument=="--view=machines": camera.position=Vector3(-1,1.85,-3.3);heading=1.8;pitch=-.13
             if argument=="--view=street": camera.position=Vector3(-.3,1.85,-3.6);heading=-.12;pitch=.04
@@ -187,6 +196,7 @@ func _create_audio() -> void:
 func _animate() -> void:
     if not is_reservoir:
         for i in range(drums.size()): drums[i].rotation.x=time*(.72+i*.047)+sin(time*.2+i)*.15
+        for i in range(dryers.size()): dryers[i].rotation.x=-time*(.48+i*.029)+i*.57
         # A parking cycle: approach, turn into bay, wait, reverse out, depart.
         # Vehicles are hidden only beyond the populated street, never at a bay.
         var phase := fmod(time,76.)
