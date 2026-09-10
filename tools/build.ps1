@@ -8,7 +8,7 @@ if ($RebuildTextures) {
     if ($proc.ExitCode -ne 0) { throw 'Aseprite texture build failed.' }
 }
 if ($RebuildAssets) {
-    foreach ($script in @('build_assets.py','build_places.py','build_sea.py','build_phuket.py','build_phuket_audio.py','build_whale.py')) {
+    foreach ($script in @('build_assets.py','build_places.py','build_sea.py','build_phuket.py','build_phuket_audio.py','build_whale.py','build_lowwater.py','build_interiors.py')) {
         $outLog = Join-Path $logRoot "$script.log"
         $errLog = Join-Path $logRoot "$script-errors.log"
         $scriptPath = '"' + (Join-Path $projectRoot "blender/$script") + '"'
@@ -32,6 +32,8 @@ Invoke-Engine @('--script','tests/channels.gd') 'channels'
 Invoke-Engine @('--script','tests/kasumi.gd') 'kasumi-tests'
 Invoke-Engine @('--script','tests/sea.gd') 'sea-tests'
 Invoke-Engine @('--script','tests/phuket.gd') 'phuket-tests'
+Invoke-Engine @('--script','tests/lowwater.gd') 'lowwater-tests'
+Invoke-Engine @('--script','tests/interiors.gd') 'interior-tests'
 Invoke-Engine @('--export-release','Web','docs/index.html') 'export'
 Set-Content -LiteralPath (Join-Path $projectRoot 'docs/.nojekyll') -Value ''
 Write-Host 'Web export ready in docs/. Commit the source and docs together.'

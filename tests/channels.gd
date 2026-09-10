@@ -17,7 +17,7 @@ func run() -> void:
     var session: Node = root.get_node("Session")
     current_scene._toggle_sound()
     check(session.sound_enabled,"Menu audio preference must persist into an experience")
-    for id in ["coast","town","sea","moor"]:
+    for id in ["coast","town","sea","lowwater","laundry","reservoir","moor"]:
         var menu: Control = current_scene
         check(menu.cards.size() == 12,"All channel slots must be built")
         var card: Button = menu.grid.get_node(id.capitalize()+"Channel")
@@ -78,7 +78,7 @@ func run() -> void:
         print("PASS channel round trip: ",id)
     current_scene._toggle_sound()
     check(not session.sound_enabled,"Sound can be disabled after returning")
-    print("PASS: four menu round trips, audio persistence, touch exclusion, pause, collision, scene cleanup")
+    print("PASS: seven menu round trips, audio persistence, touch exclusion, pause, collision, scene cleanup")
     # Let the audio server release its last playback after stopping the loop.
     await create_timer(.15).timeout
     quit(0)

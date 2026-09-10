@@ -1,6 +1,6 @@
 # Still — Atmosphere Channels
 
-Four atmospheric places, modeled in **Blender** and rendered in **Godot 4**. A Wii-inspired channel menu brings them together: full-frame rounded image tiles, subtle scanlines, hover titles, a curved lower dock and a segmented local clock. Selecting a tile expands it to fill the screen; leaving shrinks the current scene back into its channel.
+Seven atmospheric places, modeled in **Blender** and rendered in **Godot 4**. A Wii-inspired channel menu brings them together: full-frame rounded image tiles, subtle scanlines, hover titles, a curved lower dock and a segmented local clock. Selecting a tile expands it to fill the screen; leaving shrinks the current scene back into its channel.
 
 ![Channel menu](previews/menu.png)
 
@@ -13,10 +13,11 @@ Four atmospheric places, modeled in **Blender** and rendered in **Godot 4**. A W
 | **Night Crossing** | A weathered wheelhouse in rough night seas: steep crossing swells, broken whitecaps, wave-driven pitch/roll/heave, eroded sea stacks and a rock arch, distant navigation light, window rivulets, rain, warm cabin lamp, compass, radio and a marked sea chart. Original looping surf, engine throb and timber creaks. A huge whale makes brief moonlit surfacing passes before diving beneath the waves. |
 
 ![Night Crossing](assets/menu/sea.png)
+![Lowwater](assets/menu/lowwater.png)
 ![Phuket midday](assets/menu/coast.png)
 ![Kasumi Lane](assets/menu/town.png)
 
-All four use original modeled geometry and textures in a deliberately reduced-resolution 3D viewport. Kasumi now uses researched PS1 art constraints: four 256×256 texture pages, limited palettes, vertex-colored shelter shading and stable perspective-correct architectural UVs. Its models prioritize silhouettes, joinery and readable detail. Phuket uses eight original 256×256 RGB555 material studies, stable surface mapping and authored vertex shading, with carefully modeled palm leaflets, timber joinery and limestone silhouettes. Kasumi and Phuket add no artificial vertex wobble or global film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
+All seven use original modeled geometry and textures in a deliberately reduced-resolution 3D viewport. Kasumi now uses researched PS1 art constraints: four 256×256 texture pages, limited palettes, vertex-colored shelter shading and stable perspective-correct architectural UVs. Its models prioritize silhouettes, joinery and readable detail. Phuket uses eight original 256×256 RGB555 material studies, stable surface mapping and authored vertex shading, with carefully modeled palm leaflets, timber joinery and limestone silhouettes. Kasumi and Phuket add no artificial vertex wobble or global film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
 
 See [Kasumi's hardware research and art decisions](art/PS1_ART_DIRECTION.md), including primary hardware references and the deliberate modern extensions. This is a PS1-inspired Godot experience, not a hardware-accurate console build.
 
@@ -43,13 +44,13 @@ The menu reflows for portrait and short landscape windows. The scene camera adju
 
 The complete web export is committed in **`docs/`**. In repository **Settings → Pages**, select **Deploy from a branch → main → /docs**, then **Save**. Pages configuration is left to the repository owner.
 
-No build workflow or custom server headers are needed. The single-threaded Compatibility export uses WebGL 2 and WebAssembly; see [Godot's web export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html). It loads approximately 40 MB of engine WebAssembly plus an approximately 20 MB game package before starting.
+No build workflow or custom server headers are needed. The single-threaded Compatibility export uses WebGL 2 and WebAssembly; see [Godot's web export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html). It loads approximately 40 MB of engine WebAssembly plus an approximately 62 MB game package before starting.
 
 ## Edit in Godot or Blender
 
 Built with **Godot 4.7.2 stable** and **Blender 5.2.1 LTS**.
 
-Open `project.godot` and press **F5** to run the channel menu. Open `main.tscn`, `coast.tscn`, `town.tscn` or `sea.tscn` and press **F6** to run one place directly.
+Open `project.godot` and press **F5** to run the channel menu. Open `main.tscn`, `coast.tscn`, `town.tscn`, `sea.tscn`, `lowwater.tscn`, `laundry.tscn` or `reservoir.tscn` and press **F6** to run one place directly.
 
 | File | Purpose |
 | --- | --- |
@@ -123,7 +124,7 @@ godot --path . --script tests/occlusion.gd
 godot --path . --script tests/resize.gd
 ```
 
-The build runs input tests and round trips through all four channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 18 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. Shrine steps and landing heights agree with the walking surface, and solid garden walls block movement. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move, and architectural UVs and world-anchored foundation shading stay fixed across camera translation and rotation. Kasumi uses authored shelter shading and soft world-space contact shade instead of screen-space AO. Its shrine cap and stair treads do not overlap, avoiding coplanar flicker. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
+The build runs input tests and round trips through all five channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 18 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. Shrine steps and landing heights agree with the walking surface, and solid garden walls block movement. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move, and architectural UVs and world-anchored foundation shading stay fixed across camera translation and rotation. Kasumi uses authored shelter shading and soft world-space contact shade instead of screen-space AO. Its shrine cap and stair treads do not overlap, avoiding coplanar flicker. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
 
 Physical iOS/Android devices have not been tested. Browser/GPU performance varies; touch devices use a smaller render budget and less moor vegetation. The imported world art remains the same on desktop and touch.
 
@@ -134,3 +135,23 @@ All environment geometry, textures and ambient audio were created for this proje
 Mood and first-person framing reference: [Sailing study by Ray_Ervian](https://x.com/ray_ervian/status/2097336882682380306). All shipped models, textures and audio are original; no video assets are included. The sea uses five crossing wave phases, slowly changing wave groups, warped phases and procedural crest foam with wind-carried spray cards. This is an atmospheric boat experience with bounded movement, not a vessel-navigation or fluid-dynamics simulator. The rocks include irregular stacks and an eroded arch. The model keeps named parts in Blender and exports seven material batches for the web. `tests/sea.gd` verifies motion, shared clocks, pause, gentle motion, cabin boundaries and reset.
 
 The hull samples the sea across its footprint, keeping the deck above adjacent crests; water masking is limited to below the solid deck so it cannot cut a visible hole out of a wave. Additional rock groups surround the boat on both sides and astern. Cabin lettering and repeated dot-shaped paint chips have been removed. Rain and window rivulets run downward; glass and spray render after the opaque atmosphere pass.
+
+### Lowwater
+
+An old southern canal beneath spreading oaks, climbing ivy and hanging moss. The supplied Sally Mann landscape references inform the dark foreground, luminous air, enclosing canopy and restrained photographic palette. All geometry, texture pages and audio are original; the photographs are not bundled.
+
+`blender/build_lowwater.py` generates `blender/lowwater.blend`, the batched GLB, five 256×256 texture studies, collision layout and a quiet stereo insect/bird/air loop. The Blender source retains named trunks, connected roots and boughs, climbing foliage, moss, ground and canal surface. `scripts/lowwater.gd` uses the shared controls and scene lifetime; water and trunks block walking, and the right bank has a continuous route.
+
+World-space ray-marched mist gathers around a pale clearing. A smaller second camera produces planar water reflections. A final scene-only photographic print curve deepens blacks and opens the whites, with slight highlight diffusion and warm paper whites. The grade runs inside the scene viewport so transitions preserve it. Moss is anchored at its branch attachments; fog, moss and ripples share Pause. Reset restores the opening bank viewpoint. Reflection resolution follows the desktop/touch render budget.
+
+Run `godot --path . --script tests/lowwater_visual.gd` for native checks of black/white range, rendered Pause, changing atmosphere and populated reflections. `tests/lowwater.gd` checks the walking route, collision, imported terrain heights, mirrored camera and reset. Review angles: `--experience=lowwater --view=canal|reverse|roots|canopy|west`; `--lowwater-time=24` fixes the initial atmosphere time for captures. The menu keeps all five channels visible in portrait and short landscape windows.
+
+### Night Laundry and Reservoir of Columns
+
+**Night Laundry** is a sheltered shop interior with rotating recessed washer drums, intermittent fluorescent ballast flicker, pink/cyan neon, moving window rivulets, wind-driven outdoor rain and wet street light pools. One car approaches, parks, switches off its headlamps, waits, reverses out and leaves; a second car occasionally passes in the opposite lane. The original stereo loop combines machine rumble, a soft mechanical pulse and rain. Machines, glazing, seating, folding counter, vending cabinet and a wire laundry cart constrain walking.
+
+**Reservoir of Columns** is a 266-metre-long chamber with seventy columns and an 84-metre ceiling. Three actual ceiling apertures cast world-space light shafts through drifting dust. Concrete has limited-palette mottling, vertical water stains, formwork ties and a dark waterline. Quiet water reflects the structure with small ripples and localized drip rings. Grounded causeways form a connected route and loop; water blocks walking. An original reverberant drip/air loop supports the immense, quiet space.
+
+`blender/build_interiors.py` regenerates both editable `.blend` files, GLBs, five shared 256×256 texture studies, collision layouts and original audio. `scripts/interior.gd` extends the existing scene framework. Mesh compression is disabled for the exported structures to preserve walking heights. Static laundry parts batch by material; reservoir column rows remain separate culling groups. Both scenes use small planar reflection viewports and scene-local highlight diffusion. Mobile lowers reflection resolution and the reservoir's atmosphere sample count. Pause freezes their material clocks, cars, drums, particles and audio; free look continues and Reset restores the opening viewpoint without rewinding the environment.
+
+`tools/review_interiors.ps1 -ImportAssets -Tests -AllViews` runs headless geometry/behaviour checks, native rendered Pause and lighting checks, and opening/reverse/ceiling/detail/portrait/time-offset captures. Review IDs are `laundry` and `reservoir`; `--interior-time=25` fixes the starting animation phase. Menu thumbnails are actual Godot captures, not the generated concept images.

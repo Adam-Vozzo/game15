@@ -75,7 +75,10 @@ const SCENES := {
     "moor": {"path":"res://main.tscn", "title":"The Still Moor", "subtitle":"Moonlight · wind · rolling fog", "image":"res://assets/menu/moor.png"},
     "coast": {"path":"res://coast.tscn", "title":"Phuket, Blue Bay", "subtitle":"Midday sun · limestone islands · a working pier", "image":"res://assets/menu/coast.png"},
     "town": {"path":"res://town.tscn", "title":"Kasumi Lane", "subtitle":"Soft rain · warm windows · silence", "image":"res://assets/menu/town.png"},
-    "sea": {"path":"res://sea.tscn", "title":"Night Crossing", "subtitle":"Rough seas · a small boat · the last light", "image":"res://assets/menu/sea.png"}
+    "sea": {"path":"res://sea.tscn", "title":"Night Crossing", "subtitle":"Rough seas · a small boat · the last light", "image":"res://assets/menu/sea.png"},
+    "lowwater": {"path":"res://lowwater.tscn", "title":"Lowwater", "subtitle":"Old oaks · silver mist · a quiet canal", "image":"res://assets/menu/lowwater.png"},
+    "laundry": {"path":"res://laundry.tscn", "title":"Night Laundry", "subtitle":"Rain on glass · neon · the rumble of machines", "image":"res://assets/menu/laundry.png"},
+    "reservoir": {"path":"res://reservoir.tscn", "title":"Reservoir of Columns", "subtitle":"Immense concrete · still water · distant daylight", "image":"res://assets/menu/reservoir.png"}
 }
 func _ready() -> void:
     if OS.has_feature("web"):

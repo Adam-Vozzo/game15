@@ -4,7 +4,7 @@ boot_splash/show_image=false
 boot_splash/bg_color=Color(0.063,0.098,0.106,1)
 run/main_scene="res://menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/description="Three quiet places: a moonlit moor, a Phuket sunset, and a rain-softened Japanese town. Built in Blender and Godot."
+config/description="Seven atmospheric channels, from a rainy night laundromat to an immense reservoir of columns. Built in Blender and Godot."
 
 [display]
 window/size/viewport_width=1280

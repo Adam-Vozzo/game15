@@ -96,7 +96,7 @@ func _ready() -> void:
     _resize()
     _update_clock()
     if Session.return_image: call_deferred("_return_animation")
-    print("CHANNEL_MENU_READY: four experiences available")
+    print("CHANNEL_MENU_READY: ",Session.SCENES.size()," experiences available")
 
 func _panel(fill: Color, border: Color, width := 2, radius := 16) -> StyleBoxFlat:
     var panel := StyleBoxFlat.new()
@@ -202,8 +202,9 @@ func _resize() -> void:
     var screen := Vector2(logical)
     var narrow := screen.x < 700
     var short := screen.y < 540
-    var columns := 2 if narrow else 4
-    var rows := 2 if narrow else (1 if short else 3)
+    var columns := (3 if short else 2) if narrow else 4
+    var needed_rows := ceili(float(Session.SCENES.size())/columns)
+    var rows := needed_rows if narrow or short else maxi(3,needed_rows)
     var margin := 22.0 if narrow else screen.x*.06
     var top := 24.0 if short else 44.0
     var bottom := 100.0 if short else 170.0
