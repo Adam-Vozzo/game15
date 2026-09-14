@@ -98,6 +98,7 @@ func _create_environment() -> void:
                     material.set_shader_parameter("road",kind=="Road")
                     material.set_shader_parameter("reflective_floor",kind=="Tile")
                     material.set_shader_parameter("metallic",kind=="Metal")
+                    material.set_shader_parameter("recessed_fabric",kind=="Fabric")
                     var glowing := ["NeonPink","NeonCyan","TubeLight","Headlamp","Daylight"].find(kind)+1
                     material.set_shader_parameter("glow_kind",glowing)
                     if kind in ["Concrete","Tile","Enamel","Metal","Road"]:
@@ -167,6 +168,8 @@ func _create_camera() -> void:
             if argument=="--view=street": camera.position=Vector3(-.3,1.85,-3.6);heading=-.12;pitch=.04
             if argument=="--view=reverse": camera.position=Vector3(1,1.85,-3.9);heading=PI;pitch=.02
             if argument=="--view=ceiling": camera.position=Vector3(1,1.85,0);heading=.4;pitch=1.15
+            if argument=="--view=machine-side": camera.position=Vector3(-3.6,1.4,-4.35);heading=2.6;pitch=.03
+            if argument=="--view=rear-detail": camera.position=Vector3(.8,1.85,3.3);heading=PI;pitch=.16
     target_heading = heading
     target_pitch = pitch
     camera.rotation = Vector3(pitch,heading,0)
@@ -236,7 +239,7 @@ func _animate() -> void:
         reflection_camera.rotation = Vector3(-camera.rotation.x,camera.rotation.y,0)
         reflection_camera.fov = camera.fov
         reflection_camera.keep_aspect = camera.keep_aspect
-    if audio: audio.stream_paused = paused
+    _sync_audio_pause(audio)
 
 func _process(delta: float) -> void:
     super._process(delta)

@@ -10,23 +10,23 @@ var plant_meshes: Dictionary = {}
 var water_material: ShaderMaterial
 var vegetation_instances := 0
 var lamp_anchors := PackedVector4Array()
+var lamp_shapes := PackedVector4Array()
+var lamp_sizes := PackedVector2Array()
 
 func _ready() -> void:
     experience_id = "town"
     layout = JSON.parse_string(FileAccess.get_file_as_string("res://assets/data/kasumi_layout.json"))
     fields = layout.fields
-    for building in layout.buildings:
-        if building.name not in ["Saegusa_general_store","Yamaji_tea_house","Old_rice_merchant","Corner_shop"]:continue
-        var r: Array = building.rect
-        var x: float = r[0]+r[2]*.5
-        var z: float = r[1]+r[3]*.5
-        var front := 1.0 if x<0 else -1.0
-        var fx: float = x+front*(r[2]-.44)*.5
-        var depth: float = r[3]-.44
-        var floor_y := _base_height(x,z)
-        lamp_anchors.append(Vector4(fx+front*.25,floor_y+1.95,z-depth*.30,1.0))
-        lamp_anchors.append(Vector4(fx+front*1.12,floor_y+2.3,z+depth*.34,.65))
-        lamp_anchors.append(Vector4(x,floor_y+2.07,z+depth*.5+.22,1.0))
+    assert(layout.lights.size()<=64,"Kasumi light capacity must cover every authored source")
+    for light in layout.lights:
+        var p: Array = light.position
+        var n: Array = light.direction
+        lamp_anchors.append(Vector4(p[0],p[1],p[2],light.energy))
+        lamp_shapes.append(Vector4(n[0],n[1],n[2],light.radius))
+        lamp_sizes.append(Vector2(light.size[0],light.size[1]))
+    lamp_anchors.resize(64)
+    lamp_shapes.resize(64)
+    lamp_sizes.resize(64)
     bounds = Vector4(layout.bounds[0],layout.bounds[1],layout.bounds[2],layout.bounds[3])
     for building in layout.buildings:
         var r: Array = building.rect
@@ -43,6 +43,9 @@ func _base_height(x: float,z: float) -> float:
     return .03+maxf(0,-z)*.007+sin(x*.032)*sin(z*.033)*.07
 
 func surface_height(x: float,z: float) -> float:
+    for surface in layout.drainage_crossings:
+        var r: Array = surface.rect
+        if Rect2(r[0],r[1],r[2],r[3]).has_point(Vector2(x,z)):return surface.height
     for surface in layout.walk_surfaces:
         var r: Array = surface.rect
         if Rect2(r[0],r[1],r[2],r[3]).has_point(Vector2(x,z)):return surface.height
@@ -50,7 +53,7 @@ func surface_height(x: float,z: float) -> float:
         var r: Array = field.rect
         if Rect2(r[0],r[1],r[2],r[3]).has_point(Vector2(x,z)):
             return field.height+.13 if field.crop=="rice" else field.height
-    return _base_height(x,z)
+    return _base_height(x,z)+(.024 if _on_paved_route(x,z,0.) else 0.)
 
 func can_walk(point: Vector3) -> bool:
     for rect in footprints:
@@ -67,6 +70,9 @@ func _material(tile: int,cloth_motion: bool=false,plant_motion: int=0,foliage_ki
     material.set_shader_parameter("atlas",load("res://assets/textures/KasumiAtlas%d.png" % (tile/4)))
     material.set_shader_parameter("tile",tile)
     material.set_shader_parameter("lamp_anchors",lamp_anchors)
+    material.set_shader_parameter("lamp_shapes",lamp_shapes)
+    material.set_shader_parameter("lamp_sizes",lamp_sizes)
+    material.set_shader_parameter("lamp_count",layout.lights.size())
     if plant_motion>1:
         material.set_shader_parameter("foliage",load("res://assets/textures/KasumiFoliage.png"))
         material.set_shader_parameter("foliage_kind",foliage_kind)
@@ -99,7 +105,7 @@ func _create_environment() -> void:
                 var landing: Array = layout.walk_surfaces[0].rect
                 shelter.append(Vector4(landing[0],landing[1],landing[2],landing[3]))
                 material.set_shader_parameter("shelter_count",shelter.size())
-                shelter.resize(20)
+                shelter.resize(40)
                 material.set_shader_parameter("shelter_bounds",shelter)
                 node.set_surface_override_material(i,material)
             else:
@@ -181,7 +187,7 @@ func _create_vegetation() -> void:
         for i in range(280 if mobile else 500):
             var z := -94.+row*23.+rng.randf()*23.
             var x := rng.randf_range(-91,91)
-            if absf(x)<2.5: continue
+            if absf(x)<2.5 or _on_paved_route(x,z) or _on_crossing(x,z): continue
             var on_bank := false
             for field in fields:
                 var r: Array = field.rect
@@ -194,6 +200,7 @@ func _create_vegetation() -> void:
         for i in range(45):
             var z := -70.+row*17.+rng.randf()*3.
             var x := rng.randf_range(2.48,2.75)*(1 if i%2 else -1)
+            if _on_paved_route(x,z,.4) or _on_crossing(x,z):continue
             flowers.append(_transform_at(x,surface_height(x,z),z,rng.randf_range(.65,1.1)))
         _instances("Verge",tufts,11,1)
         _instances("Lily",flowers,-1,1)
@@ -202,7 +209,7 @@ func _create_vegetation() -> void:
         for i in range(1400 if mobile else 2400):
             var x: float = side*rng.randf_range(10.0,18.0)
             var z := rng.randf_range(-80,76)
-            if absf(z-17)<1.8 or absf(z+51)<1.8 or not can_walk(Vector3(x,0,z)) or _on_shrine(x,z):continue
+            if absf(z-17)<1.8 or absf(z+51)<1.8 or not can_walk(Vector3(x,0,z)) or _on_shrine(x,z) or _on_paved_route(x,z) or _on_crossing(x,z):continue
             garden.append(_transform_at(x,surface_height(x,z),z,rng.randf_range(.7,1.75)))
         _instances("Verge",garden,11,1)
 
@@ -222,6 +229,17 @@ func _on_shrine(x: float,z: float) -> bool:
     for surface in layout.walk_surfaces:
         var r: Array = surface.rect
         if Rect2(r[0],r[1],r[2],r[3]).grow(.18).has_point(Vector2(x,z)):return true
+    return false
+
+func _on_paved_route(x: float,z: float,margin: float=.10) -> bool:
+    for r in layout.get("paved_routes",[]):
+        if Rect2(r[0],r[1],r[2],r[3]).grow(margin).has_point(Vector2(x,z)):return true
+    return false
+
+func _on_crossing(x: float,z: float) -> bool:
+    for surface in layout.drainage_crossings:
+        var r: Array = surface.rect
+        if Rect2(r[0],r[1],r[2],r[3]).grow(.4).has_point(Vector2(x,z)):return true
     return false
 
 func _create_interface() -> void:
@@ -248,6 +266,12 @@ func _process(delta: float) -> void:
 func _composition(id: String) -> void:
     # Reproducible art review views use the same production camera and renderer.
     var views := {"laundry":[Vector3(-2,0,-16.5),1.83,.24],"moon":[Vector3(-16,0,21),.445,.40],"fields":[Vector3(17,0,39),-.86,.055],"wheat":[Vector3(-16,0,21),.93,.04],"back":[Vector3(0,0,17),PI,.025],"shrine":[Vector3(17,0,-49),.55,-.10],"edge":[Vector3(82,0,69),-2.18,-.03],"walls":[Vector3(-14,0,8),-.37,-.32],"tree":[Vector3(-17,0,24),-.5,.43],"ground":[Vector3(-13,0,37),-.4,-.45]}
+    views["loop"]=[Vector3(-14.3,0,15),0.,.19]
+    views["loop-north"]=[Vector3(-14.3,0,-49),-PI/2,.15]
+    views["alley"]=[Vector3(-3.2,0,-28.5),PI/2,.05]
+    views["roofs"]=[Vector3(.25,0,16),0.,.62]
+    views["lamplight"]=[Vector3(-.5,0,12.2),.62,.03]
+    views["crossing"]=[Vector3(-.5,0,17.5),.7,-.5]
     if not views.has(id):return
     var spec: Array = views[id]
     var p: Vector3 = spec[0]

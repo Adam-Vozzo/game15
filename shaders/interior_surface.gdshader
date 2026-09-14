@@ -7,6 +7,7 @@ uniform bool reservoir=false;
 uniform bool road=false;
 uniform bool reflective_floor=false;
 uniform bool metallic=false;
+uniform bool recessed_fabric=false;
 uniform sampler2D reflection_texture:filter_linear,repeat_disable;
 uniform int glow_kind=0;
 uniform float scene_time=0.;
@@ -51,6 +52,7 @@ void fragment(){
      }
      illumination+=vec3(.04,.10,.17)*exp(-abs(wp.z+5.)*.35);
      col=base*illumination;
+     if(recessed_fabric){col*=vec3(.66,.71,.73);}
      if(metallic){
        vec3 eye=normalize(CAMERA_POSITION_WORLD-wp);
        for(int i=0;i<4;i++){
@@ -73,13 +75,16 @@ void fragment(){
    if(reflective_floor && wp.y<.05 && wn.y>.9){
      vec3 reflected=texture(reflection_texture,vec2(SCREEN_UV.x,1.-SCREEN_UV.y)).rgb;
      col=mix(col,reflected,.09);
-     col+=vec3(.20,.004,.035)*exp(-pow((wp.x-.15)/1.4,2.))*exp(-abs(wp.z+5.)*.4);
+   }
+   if(wp.y<.15 && wn.y>.85){
+     // One continuous world-space light pool crosses asphalt, markings and curb.
+     // Broad irregular wetness retains a connected reflection without sine combs.
+     float wet=.78+.22*weather_noise(wp*vec3(2.1,0.,3.7));
+     float width=1.35+weather_noise(wp*vec3(.42,0.,.35))*.48;
+     col+=vec3(.34,.012,.055)*exp(-pow((wp.x-.15)/width,2.))*exp(-abs(wp.z+5.)*.20)*wet;
+     col+=vec3(.008,.18,.23)*exp(-pow((wp.x+7.5)/1.8,2.))*exp(-abs(wp.z+24.)*.13)*wet;
    }
    if(road){
-     // Elongated wet neon reflections are located beneath actual signs.
-     float streak= .7+.3*sin(wp.z*13.+sin(wp.x*31.)+scene_time*.13);
-     col+=vec3(.42,.014,.07)*exp(-pow((wp.x-.15)/1.2,2.))*exp(-abs(wp.z+6.)*.22)*streak;
-     col+=vec3(.008,.21,.27)*exp(-pow((wp.x+7.5)/1.6,2.))*exp(-abs(wp.z+24.)*.13)*streak;
      vec3 relative=wp-car_position;
      float along=dot(relative,car_direction);
      float lateral=length(relative-car_direction*along);

@@ -12,6 +12,22 @@ func run() -> void:
         assert(scene.experience_id==id and scene.can_walk(scene.start),"Channel starts on a valid walking surface")
         if id=="laundry":
             assert(scene.drums.size()==5 and scene.dryers.size()==5 and scene.cars.size()==2,"All authored moving pieces must import")
+            for node in scene.art.find_children("*","MeshInstance3D",true,false):
+                if not (str(node.name).begins_with("WasherFabric") or str(node.name).begins_with("Dryer")):continue
+                for p in node.mesh.get_faces():
+                    assert((node.global_transform*p).x< -4.65,"Every cloth fold stays behind the cabinet face and door glass")
+            # A ray through the centre of each opening must reach the rear shell.
+            # The former closed cabinet face made a physically inset load invisible.
+            for y in [.75,2.40]:
+                var origin := Vector3(-4.,y,-3.65)
+                var nearest := 9.
+                for name in ["Enamel","Metal","Dark"]:
+                    var shell: MeshInstance3D = scene.art.find_child(name,true,false)
+                    var faces := shell.mesh.get_faces()
+                    for i in range(0,faces.size(),3):
+                        var hit = Geometry3D.ray_intersects_triangle(origin,Vector3.LEFT,shell.global_transform*faces[i],shell.global_transform*faces[i+1],shell.global_transform*faces[i+2])
+                        if hit!=null:nearest=minf(nearest,origin.distance_to(hit))
+                assert(nearest>.90,"Washer and dryer shells need real open apertures")
             for p in [Vector3(-5,0,0),Vector3(0,0,-5),Vector3(5.2,0,1),Vector3(0,0,5.3)]:
                 assert(not scene.can_walk(p),"Machines, windows, benches and counters block the camera")
             assert(not scene.can_walk(Vector3(.4,0,2.8)),"New folding island blocks walking")

@@ -190,6 +190,32 @@ def ring(m,c,outer,inner,axis='x',col=(1,1,1)):
         a=i*math.tau/32;b=(i+1)*math.tau/32
         oriented(m,[p(inner,a),p(outer,a),p(outer,b),p(inner,b)],(1,0,0) if axis=='x' else ((0,1,0) if axis=='y' else (0,0,1)),col)
 
+def open_cabinet(m,c,s,r,col):
+    """Enamel shell with a real circular opening and a recessed rear wall."""
+    x,y,z=c;depth,h,w=s;front=x+depth/2;back=front-.43
+    bevel_box(m,(x-.215,y,z),(depth-.43,h,w),col,.045)
+    for j in range(48):
+        a=j*math.tau/48;b=(j+1)*math.tau/48
+        def edge(t):
+            sy,sz=math.sin(t),math.cos(t)
+            reach=min(h*.5/max(abs(sy),.0001),w*.5/max(abs(sz),.0001))
+            return (front,y+sy*reach,z+sz*reach)
+        pa=(front,y+r*math.sin(a),z+r*math.cos(a));pb=(front,y+r*math.sin(b),z+r*math.cos(b))
+        oriented(m,[pa,edge(a),edge(b),pb],(1,0,0),col)
+        ea,eb=edge(a),edge(b)
+        oriented(m,[ea,(back,ea[1],ea[2]),(back,eb[1],eb[2]),eb],(0,math.sin(a),math.cos(a)),col)
+
+def drum_sleeve(m,x0,x1,y,z,r):
+    for j in range(40):
+        a=j*math.tau/40;b=(j+1)*math.tau/40
+        oriented(m,[(x0,y+r*math.sin(a),z+r*math.cos(a)),(x1,y+r*math.sin(a),z+r*math.cos(a)),(x1,y+r*math.sin(b),z+r*math.cos(b)),(x0,y+r*math.sin(b),z+r*math.cos(b))],(0,-math.sin(a),-math.cos(a)),(.18,.24,.25))
+
+def door_collar(m,x0,x1,y,z,r):
+    # Close the projecting rim's outside so angled views cannot see through it.
+    for j in range(40):
+        a=j*math.tau/40;b=(j+1)*math.tau/40
+        oriented(m,[(x0,y+r*math.sin(a),z+r*math.cos(a)),(x1,y+r*math.sin(a),z+r*math.cos(a)),(x1,y+r*math.sin(b),z+r*math.cos(b)),(x0,y+r*math.sin(b),z+r*math.cos(b))],(0,math.sin(a),math.cos(a)),(.45,.51,.49))
+
 def lettering(name,text,at,size,kind,reverse=False,side=False):
     curve=bpy.data.curves.new(name,'FONT');curve.body=text;curve.size=size
     curve.align_x='CENTER';curve.extrude=.002;curve.resolution_u=2
@@ -248,13 +274,13 @@ def laundry():
     doors=Mesh('PortholeGlass','DoorGlass')
     # Five washers with separate rotating, recessed drums and thick steel rims.
     for i,z in enumerate([-3.65,-1.85,-.05,1.75,3.55]):
-        bevel_box(e,(-5.24,.82,z),(1.45,1.6,1.64),(.96,.93,.78),.055)
-        bevel_box(m,(-4.495,.80,z),(.038,1.30,1.51),(.70,.76,.72),.015)
+        open_cabinet(e,(-5.24,.75,z),(1.45,1.46,1.64),.455,(.96,.93,.78))
         box(m,(-4.49,1.43,z),(.05,.27,1.5),(.72,.82,.78))
         box(d,(-4.453,1.43,z-.24),(.025,.115,.40),(.10,.17,.16))
         box(cyan,(-4.437,1.435,z-.24),(.012,.034,.14),(.2,.7,.58))
         tube(m,(-4.45,1.43,z+.44),(-4.40,1.43,z+.44),.075,(.65,.7,.67),16)
-        tube(d,(-4.51,.75,z),(-4.43,.75,z),.56,(.11,.17,.19),32)
+        drum_sleeve(m,-4.83,-4.39,.75,z,.455)
+        door_collar(m,-4.525,-4.38,.75,z,.57)
         ring(m,(-4.405,.75,z),.57,.47,col=(.9,.98,1))
         ring(m,(-4.39,.75,z),.49,.455,col=(.30,.38,.4))
         ring(e,(-4.38,.75,z),.575,.55,col=(.88,.84,.66))
@@ -278,19 +304,21 @@ def laundry():
         for j in range(7):
             a=j*2.4
             cloth(fabric,(.045,.23*math.sin(a),.23*math.cos(a)),(.23,.045,.24),[(.66,.37,.23),(.24,.42,.55),(.79,.77,.67)][(j+i)%3],i*7+j,'x')
-        ob=drum.finish();ob.location=(-4.42,-z,.75)
+        ob=drum.finish();ob.location=(-4.79,-z,.75)
         cloth_ob=fabric.finish();cloth_ob.parent=ob
         lettering(f'Static machine number {i}',f'0{i+1}',(-4.40,1.39,z+.05),.085,'Dark',side=True)
         # Upper drying cabinets with glass portholes, hinges and control strip.
-        bevel_box(e,(-5.27,2.40,z),(1.39,1.30,1.64),(.84,.79,.61),.06)
-        tube(d,(-4.55,2.40,z),(-4.51,2.40,z),.46,(.09,.16,.18),32)
+        open_cabinet(e,(-5.27,2.40,z),(1.39,1.30,1.64),.41,(.84,.79,.61))
+        drum_sleeve(m,-4.94,-4.48,2.40,z,.41)
+        door_collar(m,-4.585,-4.48,2.40,z,.50)
+        tube(d,(-4.995,2.40,z),(-4.98,2.40,z),.405,(.12,.17,.18),32)
         ring(m,(-4.49,2.40,z),.50,.43,col=(.76,.77,.69))
         ring(m,(-4.48,2.40,z),.44,.41,col=(.26,.35,.36))
         dry=Mesh(f'Dryer{i}','Fabric')
         for j in range(6):
             a=j*2.4+i*.73
             cloth(dry,(.022,.19*math.sin(a),.19*math.cos(a)),(.25,.045,.26),[(.70,.70,.60),(.45,.52,.56),(.68,.46,.31)][(i+j)%3],j+i*13,'x')
-        dry_ob=dry.finish();dry_ob.location=(-4.525,-z,2.4)
+        dry_ob=dry.finish();dry_ob.location=(-4.85,-z,2.4)
         for xx,yy,rr in [(-4.365,.75,.45),(-4.465,2.40,.405)]:
             for j in range(40):
                 a=j*math.tau/40;b=(j+1)*math.tau/40
@@ -332,8 +360,26 @@ def laundry():
     box(d,(.15,2.67,-4.95),(2.45,.66,.055),(.035,.065,.065))
     lettering('Static OPEN neon','OPEN',(.15,2.43,-4.87),.52,'NeonPink')
     for a,b in [((-1.08,2.38,-4.86),(1.38,2.38,-4.86)),((-1.08,2.98,-4.86),(1.38,2.98,-4.86))]:tube(cyan,a,b,.013)
-    lettering('Static rear title','NIGHT WASH',(0,2.54,5.93),.48,'Mint',True)
-    lettering('Static rear subtitle','SELF SERVICE  /  24 HOURS',(0,2.17,5.92),.13,'Dark',True)
+    # Working storage beneath the air conditioner replaces the oversized title.
+    for yy in [1.82,2.40]:
+        bevel_box(e,(-.15,yy,5.70),(3.55,.085,.49),(.78,.75,.62),.025)
+        for xx in [-1.60,1.30]:
+            tube(m,(xx,yy-.28,5.96),(xx,yy-.04,5.50),.022,(.44,.47,.42))
+            box(m,(xx,yy-.17,5.965),(.08,.34,.035))
+        for j in range(3):
+            xx=-1.22+j*1.04
+            if yy<2:
+                for k in range(3):cloth(e,(xx,yy+.05+k*.06,5.67),(.68,.06,.35),[(.72,.74,.65),(.55,.64,.62),(.78,.67,.48)][k],j*9+k)
+            else:
+                bevel_box(mint,(xx,yy+.19,5.73),(.31,.29,.25),(.55+j*.08,.62,.54),.035)
+                tube(e,(xx,yy+.33,5.73),(xx,yy+.38,5.73),.06)
+                box(e,(xx,yy+.17,5.593),(.20,.11,.008),(.85,.78,.62))
+    # Counter fascia, inset cupboard doors, handles and grounded toe kick.
+    box(mint,(0,.55,5.63),(4.65,.90,.40),(.48,.57,.50))
+    for xx in [-1.72,-.58,.58,1.72]:
+        bevel_box(e,(xx,.58,5.401),(1.10,.78,.035),(.71,.72,.60),.024)
+        tube(m,(xx+.34,.74,5.36),(xx+.34,.87,5.36),.017)
+    box(d,(0,.075,5.63),(4.5,.15,.35),(.22,.27,.24))
     # Vending and coin exchange cabinet, with recessed selection panel.
     box(mint,(4.75,1.05,5.35),(1.35,2.1,1.0),(.40,.62,.60))
     box(d,(4.75,1.25,4.82),(.96,1.05,.035),(.05,.12,.13))

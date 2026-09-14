@@ -14,12 +14,34 @@ func run() -> void:
     await process_frame
     await process_frame
     var town: Node = current_scene
+    check(town.layout.lights.size()>12,"Every lit upper window and street lamp needs an authored light source")
+    for surface in town.layout.drainage_crossings:
+        var r: Array=surface.rect
+        check(is_equal_approx(town.surface_height(r[0]+r[2]*.5,r[1]+r[3]*.5),surface.height),"Crossing deck height must agree with walking")
+    for patch in town.world.find_children("*Patch","MultiMeshInstance3D",true,false):
+        if not ("Lily" in patch.name or "Verge" in patch.name):continue
+        for i in range(patch.multimesh.instance_count):
+            var p: Vector3=patch.multimesh.get_instance_transform(i).origin
+            check(not town._on_crossing(p.x,p.z),"Flowers and grass must not intersect wooden crossings")
+            check(not town._on_paved_route(p.x,p.z,0.),"Flowers and grass must not grow through the return lane")
     check(town.fields.size()==30,"Both sides of the valley need their complete cultivated plots")
     for building in town.layout.buildings:
         var r: Array = building.rect
         check(not town.can_walk(Vector3(r[0]+r[2]*.5,0,r[1]+r[3]*.5)),"Each modeled building footprint must block walking")
     for z in range(-95,85):
         check(town.can_walk(Vector3(0,0,z)),"The main lane must stay connected")
+    # Traverse the full new loop at walking intervals and across its width.
+    for i in range(town.layout.loop_route.size()-1):
+        var a: Array = town.layout.loop_route[i]
+        var b: Array = town.layout.loop_route[i+1]
+        var start := Vector2(a[0],a[1]);var end := Vector2(b[0],b[1])
+        var side := (end-start).normalized().orthogonal()*.38
+        for step in range(201):
+            for offset in [-1.,0.,1.]:
+                var p: Vector2 = start.lerp(end,step/200.)+side*offset
+                check(town.can_walk(Vector3(p.x,0,p.y)),"Return lane and both corner approaches must be continuously walkable")
+    for r in town.layout.blocked_alleys:
+        check(not town.can_walk(Vector3(r[0]+r[2]*.5,0,r[1]+r[3]*.5)),"Visible alley gates must stop the camera")
     check(town.layout.walk_surfaces.size()==7,"Shrine needs six steps and a solid landing")
     for surface in town.layout.walk_surfaces:
         var r: Array = surface.rect
@@ -67,7 +89,7 @@ func run() -> void:
     await process_frame
     check(town.time==time_before,"Fog, clouds, rain, cloth and crops must share the pause clock")
     check(town.camera.far>800,"Distant landscape must extend well beyond the walking boundary")
-    print("PASS: Kasumi connected lane, 18 building bounds, 30 field levels, imported crop roots, texture-page dimensions and pause")
+    print("PASS: Kasumi connected urban loop, gated alleys, building bounds, 30 field levels, imported crop roots, texture-page dimensions and pause")
     town.queue_free()
     await process_frame
     quit(0)

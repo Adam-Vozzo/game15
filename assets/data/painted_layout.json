@@ -1,0 +1,239 @@
+{
+  "walkways": [
+    [
+      -1.7,
+      1.7,
+      -28,
+      14
+    ],
+    [
+      -5.5,
+      5.5,
+      -28,
+      -19
+    ]
+  ],
+  "deck_height": 0.45,
+  "trees": [
+    {
+      "x": -7,
+      "z": 4,
+      "radius": 0.45
+    },
+    {
+      "x": 8,
+      "z": -2,
+      "radius": 0.45
+    },
+    {
+      "x": -9,
+      "z": -10,
+      "radius": 0.45
+    },
+    {
+      "x": 10,
+      "z": -18,
+      "radius": 0.45
+    },
+    {
+      "x": -13,
+      "z": -24,
+      "radius": 0.45
+    },
+    {
+      "x": 13,
+      "z": -34,
+      "radius": 0.45
+    },
+    {
+      "x": -17,
+      "z": -43,
+      "radius": 0.45
+    },
+    {
+      "x": 19,
+      "z": -48,
+      "radius": 0.45
+    },
+    {
+      "x": -16,
+      "z": 15,
+      "radius": 0.45
+    },
+    {
+      "x": 14,
+      "z": 18,
+      "radius": 0.45
+    },
+    {
+      "x": -25,
+      "z": -12,
+      "radius": 0.45
+    },
+    {
+      "x": 25,
+      "z": -20,
+      "radius": 0.45
+    },
+    {
+      "x": -30,
+      "z": -50,
+      "radius": 0.45
+    },
+    {
+      "x": 32,
+      "z": 5,
+      "radius": 0.45
+    }
+  ],
+  "lotus": [
+    [
+      -4.2,
+      7,
+      1.05
+    ],
+    [
+      4.7,
+      -5,
+      0.9
+    ],
+    [
+      -5.9,
+      -12,
+      1.1
+    ],
+    [
+      7,
+      -15,
+      0.65
+    ],
+    [
+      -8,
+      0,
+      0.6
+    ],
+    [
+      -11,
+      -18,
+      0.8
+    ],
+    [
+      5.7,
+      10,
+      0.65
+    ]
+  ],
+  "flamingos": [
+    {
+      "name": "Flamingo_00",
+      "x": -5.4,
+      "z": -3,
+      "scale": 1.02,
+      "angle": 0.35,
+      "phase": 0.0,
+      "ground": -0.3,
+      "one_leg": true
+    },
+    {
+      "name": "Flamingo_01",
+      "x": -7,
+      "z": -4.8,
+      "scale": 0.94,
+      "angle": -0.35,
+      "phase": 1.713,
+      "ground": -0.3,
+      "one_leg": false
+    },
+    {
+      "name": "Flamingo_02",
+      "x": -8.3,
+      "z": -2,
+      "scale": 0.9,
+      "angle": 0.8,
+      "phase": 3.426,
+      "ground": -0.3,
+      "one_leg": false
+    },
+    {
+      "name": "Flamingo_03",
+      "x": -6.5,
+      "z": -8.5,
+      "scale": 1.03,
+      "angle": 1.8,
+      "phase": 5.139,
+      "ground": -0.3,
+      "one_leg": true
+    },
+    {
+      "name": "Flamingo_04",
+      "x": 5.4,
+      "z": -1.8,
+      "scale": 1.0,
+      "angle": 2.65,
+      "phase": 6.852,
+      "ground": -0.3,
+      "one_leg": false
+    },
+    {
+      "name": "Flamingo_05",
+      "x": 6.8,
+      "z": -4.8,
+      "scale": 0.91,
+      "angle": 3.55,
+      "phase": 8.565000000000001,
+      "ground": -0.3,
+      "one_leg": false
+    },
+    {
+      "name": "Flamingo_06",
+      "x": 9.3,
+      "z": -0.7,
+      "scale": 0.96,
+      "angle": 2.1,
+      "phase": 10.278,
+      "ground": -0.3,
+      "one_leg": true
+    },
+    {
+      "name": "Flamingo_07",
+      "x": 6.2,
+      "z": -14,
+      "scale": 0.95,
+      "angle": 2.3,
+      "phase": 11.991,
+      "ground": -0.3,
+      "one_leg": false
+    },
+    {
+      "name": "Flamingo_08",
+      "x": -5.5,
+      "z": -19,
+      "scale": 0.98,
+      "angle": -0.2,
+      "phase": 13.704,
+      "ground": -0.3,
+      "one_leg": false
+    }
+  ],
+  "dragonflies": [
+    {
+      "name": "Dragonfly_00",
+      "x": -4.2,
+      "z": 7,
+      "y": 1.8475000000000001,
+      "phase": 0.0
+    },
+    {
+      "name": "Dragonfly_01",
+      "x": 4.7,
+      "z": -5,
+      "y": 1.615,
+      "phase": 11.3
+    }
+  ],
+  "conservatory": [
+    0,
+    -31.7,
+    5.2
+  ]
+}

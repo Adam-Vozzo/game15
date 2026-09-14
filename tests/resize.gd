@@ -7,7 +7,7 @@ func settle() -> void:
     for i in range(35): await process_frame
 
 func run() -> void:
-    for id in ["menu","coast","town","sea","lowwater","laundry","reservoir","main"]:
+    for id in ["menu","coast","town","sea","lowwater","laundry","reservoir","signal","painted","roccella","main"]:
         change_scene_to_file("res://"+id+".tscn")
         await settle()
         for shape in [Vector2i(390,844),Vector2i(640,360),Vector2i(844,390),Vector2i(1280,800)]:
@@ -26,5 +26,5 @@ func run() -> void:
                     var joystick := Rect2(current_scene.touch.joystick_center-Vector2.ONE*52,Vector2.ONE*104)
                     assert(not joystick.intersects(current_scene.controls.get_global_rect()),"Scene buttons must not overlap the touch joystick")
             print("PASS resize: ",id," ",shape)
-    print("PASS: live portrait, landscape and desktop resizing across the menu and all seven scenes")
+    print("PASS: live portrait, landscape and desktop resizing across the menu and all ten scenes")
     quit(0)

@@ -3,6 +3,7 @@ var birds: Array[Node3D] = []
 var fish: Array[Node3D] = []
 var turtle: Node3D
 var fish_velocities: Array[Vector3] = []
+var detail_layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://assets/data/phuket_detail_layout.json"))
 const SCHOOL_CENTRES = [Vector3(2,-.4,-14),Vector3(-17,-.7,-25),Vector3(20,-.8,-24),Vector3(-4,-1.0,-40)]
 
 func _ready() -> void:
@@ -18,6 +19,10 @@ func surface_height(x: float,z: float) -> float:
     return .12+.052*z+.12*sin(x*.06)*maxf(z,0.)/25.
 
 func can_walk(p: Vector3) -> bool:
+    for trunk in detail_layout.trunks:
+        if Vector2(p.x-trunk[0],p.z-trunk[1]).length()<trunk[2]:return false
+    for r in detail_layout.obstacles:
+        if Rect2(r[0],r[1],r[2],r[3]).grow(.12).has_point(Vector2(p.x,p.z)):return false
     if p.z>=1.: return not (p.x> -18.5 and p.x< -13.5 and p.z>15. and p.z<19.)
     if p.x>17.2:
         if p.x<17.8 and absf(p.z+35.)>.80: return false
@@ -135,6 +140,9 @@ func _create_camera() -> void:
         if arg=="--view=hut": start=Vector3(14,2.93,-35);camera.position=start;target_pitch=.03;pitch=.03;target_heading=-PI*.5;heading=-PI*.5
         if arg=="--view=bench": start=Vector3(10,2.93,-18);camera.position=start;target_pitch=-.45;pitch=-.45;target_heading=-PI*.5;heading=-PI*.5
         if arg=="--view=shore": start=Vector3(10,2.93,3);camera.position=start;target_pitch=-.22;pitch=-.22;target_heading=PI;heading=PI
+        if arg=="--view=beach-detail": camera.position=Vector3(-1,2.65,13);target_pitch=-.33;pitch=-.33;target_heading=.82;heading=.82
+        if arg=="--view=palm": camera.position=Vector3(-4,2.65,10);target_pitch=1.0;pitch=1.0;target_heading=.72;heading=.72
+        if arg=="--view=under-pier": camera.position=Vector3(6.2,.18,-12);target_pitch=.2;pitch=.2;target_heading=-.9;heading=-.9
 
 func _look(delta: Vector2) -> void:
     target_heading -= delta.x*.0025

@@ -5814,6 +5814,10 @@
       "length": 2.112383928895197
     }
   ],
+  "air_particles": {
+    "motes": 420,
+    "leaves": 18
+  },
   "water_level": -0.12,
   "walk_bounds": [
     -26,

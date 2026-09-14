@@ -1,5 +1,6 @@
 extends Node
 var sound_enabled := false
+var render_scale := 1.0
 var last_scene := "moor"
 var reduced_motion := false
 var transitioning := false
@@ -78,8 +79,16 @@ const SCENES := {
     "sea": {"path":"res://sea.tscn", "title":"Night Crossing", "subtitle":"Rough seas · a small boat · the last light", "image":"res://assets/menu/sea.png"},
     "lowwater": {"path":"res://lowwater.tscn", "title":"Lowwater", "subtitle":"Old oaks · silver mist · a quiet canal", "image":"res://assets/menu/lowwater.png"},
     "laundry": {"path":"res://laundry.tscn", "title":"Night Laundry", "subtitle":"Rain on glass · neon · the rumble of machines", "image":"res://assets/menu/laundry.png"},
-    "reservoir": {"path":"res://reservoir.tscn", "title":"Reservoir of Columns", "subtitle":"Immense concrete · still water · distant daylight", "image":"res://assets/menu/reservoir.png"}
+    "reservoir": {"path":"res://reservoir.tscn", "title":"Reservoir of Columns", "subtitle":"Immense concrete · still water · distant daylight", "image":"res://assets/menu/reservoir.png"},
+    "signal": {"path":"res://signal.tscn", "title":"Signal Grove", "subtitle":"A glitched tree · rising pixels · forest mist", "image":"res://assets/menu/signal.png"},
+    "painted": {"path":"res://painted.tscn", "title":"The Painted Mere", "subtitle":"Watercolour · fine ink · a glasshouse on the water", "image":"res://assets/menu/painted.png"},
+    "roccella": {"path":"res://roccella.tscn", "title":"La Burrasca", "subtitle":"Calabrian rooftops · torrential rain · distant thunder", "image":"res://assets/menu/roccella.png"}
 }
 func _ready() -> void:
+    # The two exported archives are preloaded before startup. This keeps each
+    # downloadable file within GitHub's limit without changing resource bytes.
+    if OS.has_feature("web") or FileAccess.file_exists("worlds.zip"):
+        if not ProjectSettings.load_resource_pack("worlds.zip"):
+            push_error("The additional scene archive could not be loaded")
     if OS.has_feature("web"):
         reduced_motion = bool(JavaScriptBridge.eval("window.matchMedia('(prefers-reduced-motion: reduce)').matches"))

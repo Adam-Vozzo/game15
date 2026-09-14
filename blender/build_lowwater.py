@@ -372,12 +372,27 @@ sun_image.pixels=depth_pixels
 sun_image.filepath_raw=str(ROOT/'assets/textures/LowwaterSunDepth.png');sun_image.file_format='PNG';sun_image.save()
 print('LOWWATER_SUN_DEPTH_READY',sun_size)
 
-(ROOT/'assets/data/lowwater_layout.json').write_text(json.dumps({'trees':trunks,'moss_anchors':moss_anchors,'water_level':-.12,'walk_bounds':[-26,28,-89,32]},indent=2))
+# Sparse moving air lives in the editable source. UV corners expand around each
+# authored world anchor; the runtime clock only drifts those anchors locally.
+air_rng=random.Random(99214)
+for name,count in [('LightMotes',420),('CanopyLeaves',18)]:
+    batch=Batch(name,'Earth')
+    for i in range(count):
+        x=air_rng.uniform(-8,17);z=air_rng.uniform(-58,27)
+        y=air_rng.uniform(1.2,8.2) if name=='LightMotes' else air_rng.uniform(8.2,11.5)
+        anchor=(x,y,z)
+        # Nonzero source faces survive importer degenerate-triangle removal.
+        batch.face([(x-.002,y-.002,z),(x+.002,y-.002,z),(x+.002,y+.002,z),(x-.002,y+.002,z)],[(0,0),(1,0),(1,1),(0,1)])
+        seed=air_rng.random();size=air_rng.uniform(.65,1.)
+        batch.colors[-4:]=[(seed,size,air_rng.random(),1.)]*4
+    batch.finish()
+
+(ROOT/'assets/data/lowwater_layout.json').write_text(json.dumps({'trees':trunks,'moss_anchors':moss_anchors,'air_particles':{'motes':420,'leaves':18},'water_level':-.12,'walk_bounds':[-26,28,-89,32]},indent=2))
 bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'blender/lowwater.blend'))
 # Preserve named editable parts in .blend; batch static GLB by material.
 for kind in mats:
     bpy.ops.object.select_all(action='DESELECT')
-    objs=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name!='CanalWater' and o.data.materials[0]==mats[kind]]
+    objs=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name not in ['CanalWater','LightMotes','CanopyLeaves'] and o.data.materials[0]==mats[kind]]
     for o in objs:o.select_set(True)
     if objs:
         bpy.context.view_layer.objects.active=objs[0]

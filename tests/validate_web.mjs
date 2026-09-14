@@ -6,6 +6,13 @@ assert.match(html,/GODOT_THREADS_ENABLED = false/);
 const match=html.match(/const GODOT_CONFIG = (\{.*\});/);
 assert.ok(match,'Export engine configuration must exist');
 const config=JSON.parse(match[1]);
+const packScript=readFileSync(new URL('pack.js',folder),'utf8');
+const pack=JSON.parse(packScript.match(/const STILL_PACK = (\{.*\});/)[1]);
+assert.equal(pack.file,'index.zip');
+assert.match(html,/GODOT_CONFIG.mainPack = STILL_PACK.file/);
+delete config.fileSizes[config.executable+'.pck'];
+config.fileSizes[pack.file]=pack.size;
+config.fileSizes[pack.extra.file]=pack.extra.size;
 assert.equal(config.executable,'index');
 assert.equal(config.canvasResizePolicy,0,'Canvas dimensions are managed explicitly');
 assert.match(html,/ResizeObserver\(fitGameCanvas\)/,'Canvas must follow browser resizing');
@@ -15,7 +22,10 @@ for(const [name,size] of Object.entries(config.fileSizes)){
   assert.ok(new URL(name,'https://adam-vozzo.github.io/game15/').pathname.startsWith('/game15/'));
 }
 assert.equal(readFileSync(new URL('index.wasm',folder)).subarray(0,4).toString('hex'),'0061736d');
-assert.equal(readFileSync(new URL('index.pck',folder)).subarray(0,4).toString(),'GDPC');
+assert.equal(readFileSync(new URL(pack.file,folder)).subarray(0,4).toString('hex'),'504b0304');
+assert.ok(pack.size<100*1024*1024,'Pages assets must stay below GitHub file limit');
+assert.ok(pack.extra.size<100*1024*1024,'Extra scene archive must stay below GitHub file limit');
+assert.equal(readFileSync(new URL(pack.extra.file,folder)).subarray(0,4).toString('hex'),'504b0304');
 assert.ok(existsSync(new URL('.nojekyll',folder)));
 assert.ok(existsSync(new URL('index.js',folder)));
 console.log('PASS: valid WebAssembly, Godot package, file sizes, relative Pages paths, single-threaded export');

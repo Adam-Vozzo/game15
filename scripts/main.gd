@@ -8,6 +8,9 @@ var controls: VBoxContainer
 var settings_button: Button
 var settings_open := false
 var settings_tween: Tween
+var resolution_slider: HSlider
+var resolution_label: Label
+var resolution_panel: PanelContainer
 var touch: Control
 var mist: ShaderMaterial
 var grass_material: ShaderMaterial
@@ -244,6 +247,37 @@ func _create_interface() -> void:
         controls.get_child(1).text = "Resume" if paused else "Pause"
     )
     _button("Reset", _reset)
+    resolution_panel = PanelContainer.new()
+    var resolution_style := StyleBoxFlat.new()
+    resolution_style.bg_color=Color(.03,.06,.065,.85)
+    resolution_style.border_color=Color(.6,.72,.64,.25)
+    resolution_style.set_border_width_all(1)
+    resolution_style.content_margin_left=12
+    resolution_style.content_margin_right=12
+    resolution_style.content_margin_top=7
+    resolution_style.content_margin_bottom=4
+    resolution_panel.add_theme_stylebox_override("panel",resolution_style)
+    controls.add_child(resolution_panel)
+    var resolution_box := VBoxContainer.new()
+    resolution_box.add_theme_constant_override("separation",0)
+    resolution_panel.add_child(resolution_box)
+    resolution_label=Label.new()
+    resolution_label.add_theme_font_size_override("font_size",12)
+    resolution_label.mouse_filter=Control.MOUSE_FILTER_IGNORE
+    resolution_box.add_child(resolution_label)
+    resolution_slider=HSlider.new()
+    resolution_slider.name="RenderResolution"
+    resolution_slider.min_value=25
+    resolution_slider.max_value=200
+    resolution_slider.step=5
+    resolution_slider.value=Session.render_scale*100.
+    resolution_slider.custom_minimum_size=Vector2(0,36)
+    resolution_slider.tooltip_text="Render resolution. 100% uses the original scene detail; higher values sharpen it, up to your screen size."
+    resolution_slider.value_changed.connect(func(value: float):
+        Session.render_scale=value/100.
+        _resize()
+    )
+    resolution_box.add_child(resolution_slider)
     controls.get_child(0).text = "Sound on" if sound_on else "Sound off"
     menu_button = Button.new()
     menu_button.text = "Leave"
@@ -284,6 +318,14 @@ func _create_audio() -> void:
     add_child(audio)
     if sound_on: audio.play()
 
+func _sync_audio_pause(player: AudioStreamPlayer) -> void:
+    # Web sample playback treats each unpause call as a restart, cloning the
+    # entire buffer. Repeating false every frame creates buzzing and unbounded
+    # allocations. Only send a pause transition when the live player differs.
+    # Read the player so starting sound during Pause is handled immediately too.
+    if player and player.stream_paused != paused:
+        player.stream_paused = paused
+
 func _sync_display_size() -> void:
     var logical_size: Vector2i = Session.display_size()
     var window := get_window()
@@ -292,12 +334,19 @@ func _sync_display_size() -> void:
     if window.content_scale_size != logical_size:
         window.content_scale_size = logical_size
 
+func _render_budget() -> Vector2:
+    return Vector2(640,480) if mobile else Vector2(960,640)
+
 func _resize() -> void:
     _sync_display_size()
     var screen := get_viewport().get_visible_rect().size
-    var budget := Vector2(640,480) if mobile else Vector2(960,640)
-    var ratio := minf(1.0,minf(budget.x/screen.x,budget.y/screen.y))
-    view.size = Vector2i(screen * ratio)
+    var budget := _render_budget()
+    var base_ratio := minf(1.0,minf(budget.x/screen.x,budget.y/screen.y))
+    var ratio := minf(1.,base_ratio*Session.render_scale)
+    view.size = Vector2i(screen * ratio).max(Vector2i(1,1))
+    resolution_label.text="Resolution · %d%%\n%d × %d" % [roundi(Session.render_scale*100),view.size.x,view.size.y]
+    if screen.y<300:resolution_label.text="Resolution · %d%%" % roundi(Session.render_scale*100)
+    resolution_slider.custom_minimum_size.y=26 if screen.y<300 else 36
     camera.keep_aspect = Camera3D.KEEP_WIDTH if screen.x < screen.y else Camera3D.KEEP_HEIGHT
     camera.fov = 72 if screen.x < screen.y else 61
     for label in [top_label,subtitle,footer,hint]: label.hide()
@@ -306,9 +355,15 @@ func _resize() -> void:
     menu_button.position = Vector2(screen.x-136,screen.y-56)
     menu_button.custom_minimum_size = Vector2(76,44)
     menu_button.size = Vector2(76,44)
-    controls.custom_minimum_size.x = 150
+    var panel_width := 220. if screen.x>=390 else 170.
+    controls.custom_minimum_size.x = panel_width
+    # Keep all options reachable in short landscape windows, including sea motion.
+    var compact := screen.y<380
+    controls.add_theme_constant_override("separation",4 if compact else 8)
+    for child in controls.get_children():
+        if child is Button:child.custom_minimum_size.y=26 if screen.y<300 else (30 if compact else 46)
     controls.reset_size()
-    controls.position = Vector2(screen.x-164,screen.y-68-controls.size.y)
+    controls.position = Vector2(screen.x-panel_width-14,maxf(4,screen.y-68-controls.size.y))
     _update_control_exclusions()
     dragging = false
 
@@ -322,6 +377,9 @@ func _toggle_settings() -> void:
     controls.show()
     controls.pivot_offset = Vector2(controls.size.x,controls.size.y)
     if settings_open:
+        Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
+        dragging=false
+        touch.reset_input()
         controls.scale = Vector2(.96,.82)
         controls.modulate.a = 0
     settings_tween = create_tween().set_parallel(true)
@@ -356,6 +414,9 @@ func _look(delta: Vector2) -> void:
     target_pitch = clampf(target_pitch-delta.y*.0025,-.65,.65)
 
 func _input(event: InputEvent) -> void:
+    if event is InputEventScreenTouch:
+        dragging=false
+        if Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
     if event is InputEventKey and event.pressed and event.physical_keycode==KEY_ESCAPE:
         Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
         dragging = false
@@ -364,7 +425,7 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
     # GUI buttons receive emulated mouse taps; touch camera input is handled once.
-    if event is InputEventMouse and event.device == -1: return
+    if event is InputEventMouse and (event.device == -1 or (touch and touch.suppress_mouse_look())): return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
         dragging = event.pressed
         if event.pressed and not mobile: Session.capture_pointer()
@@ -387,8 +448,9 @@ func _process(delta: float) -> void:
     heading = lerpf(heading,target_heading,minf(delta*8,1))
     pitch = lerpf(pitch,target_pitch,minf(delta*8,1))
     var direction := walking
-    direction.x += float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT))
-    direction.y += float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
+    if not (settings_open and resolution_slider.has_focus()):
+        direction.x += float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT))
+        direction.y += float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
     direction = direction.limit_length(1)
     var forward := Vector3(-sin(heading),0,-cos(heading))
     var right := Vector3(cos(heading),0,-sin(heading))

@@ -53,6 +53,40 @@ func run() -> void:
     assert(Controls.movement_vector(Vector2(2,2)) == Vector2.ZERO,"Dead zone must stop resting thumbs")
     assert(is_equal_approx(Controls.movement_vector(Vector2(100,-100)).length(),1.0),"Diagonal speed must be capped")
     assert(Controls.movement_vector(Vector2(0,-21)).length() < 1.0,"Joystick must support partial speed")
-    print("PASS: simultaneous touch, ownership, cancel, focus loss, UI exclusion, dead zone, speed cap")
+    touch.reset_input()
+    var scene = load("res://scripts/main.gd").new()
+    scene.touch=touch
+    touch.look_changed.connect(scene._look)
+    press(0,center)
+    press(1,Vector2(350,300))
+    # Reproduce a backend delta measured from the movement finger, and ordinary
+    # device-ID compatibility mouse events arriving alongside real touch drags.
+    for i in range(20):
+        drag(0,center+Vector2(0,-42),Vector2(0,-42))
+        drag(1,Vector2(352+i*2,299-i),Vector2(268,-500))
+        scene.dragging=true
+        var mouse := InputEventMouseMotion.new()
+        mouse.device=0
+        mouse.relative=Vector2(268,-500)
+        scene._unhandled_input(mouse)
+    assert(is_equal_approx(scene.target_pitch,.085),"Interleaved touch and mouse must produce only the look finger's 20px pitch change")
+    assert(movement[0].y==-1,"Looking must preserve continuous walking")
+    press(1,Vector2(390,280),false)
+    press(1,Vector2(430,600))
+    drag(1,Vector2(434,602),Vector2(-800,900))
+    assert(looking[0]==Vector2(4,2),"A reused finger ID must start a fresh position baseline")
+    press(0,center,false)
+    press(1,Vector2(434,602),false)
+    var before: float=scene.target_pitch
+    var release_mouse := InputEventMouseMotion.new()
+    release_mouse.relative=Vector2(0,-700)
+    scene._unhandled_input(release_mouse)
+    assert(scene.target_pitch==before,"Compatibility mouse events after touch release must not snap the view")
+    touch.last_touch_msec=-1000
+    release_mouse.relative=Vector2(4,2)
+    scene._unhandled_input(release_mouse)
+    assert(is_equal_approx(scene.target_pitch,before-.005),"Real mouse drag must work again after the touch gesture")
+    scene.free()
+    print("PASS: simultaneous touch, per-finger deltas, duplicate mouse suppression, pointer reuse, cancel, focus loss, UI exclusion, desktop recovery")
     touch.queue_free()
     quit(0)
