@@ -181,3 +181,7 @@ A ninth channel interprets the supplied watercolour-and-ink references as a whit
 `blender/build_painted.py` regenerates the editable `blender/painted_mere.blend`, GLB, paper study, route layout and audio. Runtime: `scripts/painted.gd`, `painted.tscn`, and `shaders/painted_*`. See [the technique and tool decisions](art/PAINTED_MERE.md). Run `tests/painted.gd` for route/collision/clock checks and `tests/painted_visual.gd` in native Godot for visual/Pause checks and multi-angle captures. The new channel shares desktop/touch controls and appears in the responsive menu.
 
 The Painted Mere now includes nine ink-lined flamingos with gentle independent neck movements, standing and one-leg poses, and occasional pigment spills beyond selected flower, leaf, tree and bird outlines. The wildlife remains Blender-authored; animation and sound follow Pause. See `art/PAINTED_MERE.md` for the overflow and wildlife source details.
+
+### La Burrasca
+
+A terraced Italian coastal village in torrential rain, with lightning revealing the church and town through fog. Piazza paving is soaked, with shallow corner pools, reflections of nearby architecture, rain-impact rings, droplets and small stair spills. Regenerate the editable Blender scene and GLB with `blender/build_roccella.py`. Run `tests/roccella.gd` for route, terrain, water-height and clock checks, and `tests/roccella_visual.gd` in native Godot for rendered water/Pause comparisons and multi-angle captures. Water and reflections follow the shared Pause and resolution controls.

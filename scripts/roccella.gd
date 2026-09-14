@@ -3,6 +3,10 @@ extends "res://scripts/main.gd"
 var layout: Dictionary
 var storm_materials: Array[ShaderMaterial]=[]
 var rain_material: ShaderMaterial
+var water_material: ShaderMaterial
+var reflection_view: SubViewport
+var reflection_camera: Camera3D
+var reflection_height:=36.04
 var thunder: AudioStreamPlayer
 var flash := 0.0
 var last_thunder_event := -1
@@ -50,12 +54,33 @@ func _create_environment() -> void:
     for p in layout.lamps:lamp_positions.append(Vector3(p[0],p[1],p[2]))
     lamp_positions.resize(24)
     for part in art.find_children("*","MeshInstance3D",true,false):
+        if "Puddle" in part.name:
+            water_material=ShaderMaterial.new()
+            water_material.shader=load("res://shaders/roccella_water.gdshader")
+            water_material.render_priority=110
+            water_material.set_shader_parameter("lamps",lamp_positions)
+            water_material.set_shader_parameter("lamp_count",layout.lamps.size())
+            part.material_override=water_material
+            part.layers=2
+            storm_materials.append(water_material)
+            continue
+        if "Splash" in part.name or "Runoff" in part.name:
+            var spray:=ShaderMaterial.new()
+            spray.shader=load("res://shaders/roccella_splash.gdshader")
+            spray.set_shader_parameter("runoff","Runoff" in part.name)
+            spray.render_priority=121
+            part.material_override=spray
+            part.extra_cull_margin=.5
+            part.layers=2
+            storm_materials.append(spray)
+            continue
         if "Rain" in part.name:
             rain_material=ShaderMaterial.new()
             rain_material.shader=load("res://shaders/roccella_rain.gdshader")
-            rain_material.render_priority=110
+            rain_material.render_priority=120
             part.material_override=rain_material
             part.extra_cull_margin=120
+            part.layers=2
             storm_materials.append(rain_material)
             continue
         for i in range(part.mesh.get_surface_count()):
@@ -88,6 +113,17 @@ func _create_camera() -> void:
     mist.shader=load("res://shaders/roccella_atmosphere.gdshader")
     mist.render_priority=100
     mist.set_shader_parameter("fog_steps",18 if mobile else 28)
+    camera.get_child(0).layers=4
+    reflection_view=SubViewport.new()
+    reflection_view.world_3d=view.find_world_3d()
+    reflection_view.render_target_update_mode=SubViewport.UPDATE_ALWAYS
+    add_child(reflection_view)
+    reflection_camera=Camera3D.new()
+    reflection_camera.cull_mask=1
+    reflection_camera.near=.05
+    reflection_camera.far=140
+    reflection_view.add_child(reflection_camera)
+    water_material.set_shader_parameter("reflection_texture",reflection_view.get_texture())
     for arg in OS.get_cmdline_user_args():
         if arg=="--view=stairs":camera.position=Vector3(0,0,-9);pitch=-.26;heading=0
         if arg=="--view=reverse":camera.position=Vector3(0,0,-24);pitch=.35;heading=PI
@@ -95,6 +131,26 @@ func _create_camera() -> void:
         if arg=="--view=balcony":camera.position=Vector3(2,0,12);pitch=.64;heading=-1.3
         if arg=="--view=coast":camera.position=Vector3(0,0,-45);pitch=-.05;heading=-.1
     target_heading=heading;target_pitch=pitch
+
+func _resize() -> void:
+    super._resize()
+    if reflection_view:reflection_view.size=Vector2i(Vector2(view.size)*(.25 if mobile else .40)).max(Vector2i(1,1))
+
+func _update_water_reflection() -> void:
+    var nearest:=INF
+    for pool in layout.puddles:
+        # On the long lookout stair, mirror the lower landing until the player
+        # reaches the upper one. The main camera must stay above this plane.
+        if pool.floor>camera.position.y-1.65:continue
+        var distance:float=absf(pool.floor-(camera.position.y-1.85))
+        if distance<nearest:
+            nearest=distance
+            reflection_height=pool.floor+.04
+    reflection_camera.position=Vector3(camera.position.x,2.*reflection_height-camera.position.y,camera.position.z)
+    reflection_camera.rotation=Vector3(-camera.rotation.x,camera.rotation.y,0)
+    reflection_camera.fov=camera.fov
+    reflection_camera.keep_aspect=camera.keep_aspect
+    for material in storm_materials:material.set_shader_parameter("reflection_height",reflection_height)
 
 func _look(delta: Vector2) -> void:
     target_heading-=delta.x*.0025
@@ -137,6 +193,7 @@ func _process(delta: float) -> void:
     for material in storm_materials:
         material.set_shader_parameter("scene_time",time)
         material.set_shader_parameter("flash",flash)
+    _update_water_reflection()
     _sync_audio_pause(audio)
     _sync_audio_pause(thunder)
     if not sound_on:thunder.stop()

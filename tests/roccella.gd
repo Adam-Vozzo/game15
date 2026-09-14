@@ -65,6 +65,19 @@ func run() -> void:
                         assert(p.y<b.base-.1,"Imported hillside cannot clip through a doorway or wall")
                         checked+=1
     assert(checked>1000,"Terrain check must cover the actual town mesh")
+    assert(s.layout.puddles.size()>=27 and s.layout.splash_anchors.size()>1500,"The walked route needs standing water and impacts")
+    for pool in s.layout.puddles:
+        assert(absf(s.surface_height(pool.x,pool.z)-pool.floor)<.01,"Water must sit on its own terrace")
+        assert(pool.depth>0. and pool.depth<.08,"Corner flooding must remain shallow")
+    for p in s.layout.splash_anchors:
+        var height:float=p[1]-s.surface_height(p[0],p[2])
+        assert(height>.005 and height<.09,"Splash anchors must meet paving or shallow water")
+    assert(s.reflection_camera.cull_mask==1,"The mirror must exclude water, rain and the screen fog pass")
+    s._update_water_reflection()
+    assert(absf(s.reflection_camera.position.y+s.camera.position.y-2*s.reflection_height)<.001,"Reflection must mirror about the active water level")
+    for elevation in range(24,37):
+        s.camera.position.y=elevation+1.85;s._update_water_reflection()
+        assert(s.reflection_height<s.camera.position.y-.2,"Lookout stairs must not activate mirror clipping in the main view")
     s.set_process(false)
     s.paused=false
     s._sync_audio_pause(s.audio);s._sync_audio_pause(s.thunder)

@@ -101,3 +101,7 @@ Kasumi's requested direction is now a compact urban edge: varied building height
 ## The Painted Mere — watercolour and ink
 
 The user explicitly requested a new experience in the style of four supplied watercolour/ink images. This channel deliberately uses white paper, pastel pigment, thin pen marks and translucent washes instead of enforcing another channel's PS1 pixel treatment. See `PAINTED_MERE.md` for rendering decisions and primary research links. Preserve fixed material coordinates, soft distance-to-white, separate crown sorting and scene-local antialiasing. Blender remains the source for all geometry and pen paths. Review the conservatory interior as well as its facade: roof-ring paths must match pane vertices, and no crossbar may obstruct the doorway. Piles reach the modeled mere bed. Runtime walking stays on the deck, landing and glasshouse interior.
+
+## La Burrasca — storm water
+
+Keep paving visibly soaked between lightning flashes. Standing water belongs to individual level piazzas and shallow corners; do not stretch a pool across stair elevations. All puddle sheets, splash anchors and riser spills come from `blender/build_roccella.py`. Small world-anchored impact rings and short droplets follow the shared clock. Native review should include `tests/roccella_visual.gd` wet-corner, wet-risers and wet-portrait captures, with and without water and at different clock phases. The local planar reflection excludes rain/water/fog to avoid recursion. Transparent water follows the opaque-screen fog composite and supplies its own attenuation.
