@@ -12,8 +12,9 @@ void vertex(){
  vec3 anchor=MODEL_MATRIX[3].xyz;
  float crest=swell(anchor.xz,birth);
  float active=smoothstep(.45,1.05,crest);
+ active*=smoothstep(.40,.70,sea_noise(anchor.xz*.22+vec2(-birth*.055,birth*.021)));
  float phase=age/lifetime;
- opacity=active*sin(phase*3.14159)*.86*exp(-length(anchor-CAMERA_POSITION_WORLD)*.009);
+ opacity=active*sin(phase*3.14159)*.65*exp(-length(anchor-CAMERA_POSITION_WORLD)*.009);
  vec3 centre=anchor+vec3(-age*(1.2+seed),crest+.16+age*1.75-age*age*.85,age*.6);
  vec2 size=VERTEX.xy*(.6+phase*.9);
  vec3 world=centre+INV_VIEW_MATRIX[0].xyz*size.x+INV_VIEW_MATRIX[1].xyz*size.y;

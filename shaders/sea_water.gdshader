@@ -22,9 +22,11 @@ void fragment(){
  vec3 moon=normalize(vec3(-.32,.48,-.8));
  float spec=pow(max(dot(reflect(-moon,normal),eye),0.),60.);
  color+=vec3(.38,.53,.49)*spec*(.45+grain*.55);
- float crest=smoothstep(.48,1.3,h)*smoothstep(.27,.62,grain);
- float broken=step(.53,sea_noise(p*11.+sea_time*.28));
- color=mix(color,vec3(.47,.59,.53),crest*broken*.92);
+ float curvature=h-(swell(p+vec2(.65,0),sea_time)+swell(p-vec2(.65,0),sea_time)+swell(p+vec2(0,.65),sea_time)+swell(p-vec2(0,.65),sea_time))*.25;
+ float patch=sea_noise(p*.22+vec2(-sea_time*.055,sea_time*.021));
+ float crest=smoothstep(.32,1.22,h)*smoothstep(.014,.095,curvature)*smoothstep(.42,.73,patch);
+ float broken=smoothstep(.43,.66,sea_noise(p*9.+sea_time*.28));
+ color=mix(color,vec3(.43,.55,.50),crest*broken*.86);
  // A feathered wake around the hull, never a flat second water plane.
  float wake=exp(-pow((abs(p.x)-1.85)/.55,2.))*smoothstep(-5.,-1.,p.y)*(1.-smoothstep(2.,8.,p.y));
  color+=vec3(.19,.26,.24)*wake*step(.60,grain);

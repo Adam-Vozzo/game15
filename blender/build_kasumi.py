@@ -76,7 +76,7 @@ class Mesh:
         ob=bpy.data.objects.new(self.name,data);bpy.context.collection.objects.link(ob);ob.location=xyz(origin)
         return ob
 
-layout={'version':3,'bounds':[-93,93,-112,91],'buildings':[],'fields':[],'trees':[],'atlas':NAMES,'obstacles':[],'walk_surfaces':[]}
+layout={'version':4,'bounds':[-93,93,-112,91],'buildings':[],'fields':[],'trees':[],'atlas':NAMES,'obstacles':[],'walk_surfaces':[],'lights':[]}
 # Fields share exactly the same layout with the walk surface and plant instancing.
 for side in [-1,1]:
     for row,z in enumerate([-58,-32,-6,20,46]):
@@ -121,6 +121,7 @@ for f in layout['fields']:
 fields.finish()
 
 def window(m,x,y,z,w,h,front,lit=False):
+    if lit:layout['lights'].append({'position':[x+front*.23,y,z],'direction':[front,0,0],'size':[w*.5,h*.5],'radius':4.6,'energy':.85,'kind':'window'})
     m.box((x,y,z),(.07,h+.20,w+.20),14,.60)
     m.box((x+front*.044,y,z),(.025,h,w),7 if lit else 6,.83 if lit else .70)
     for dz in [-w*.5,w*.5]:m.box((x+front*.085,y,z+dz),(.10,h+.14,.085),0,.68)
@@ -178,7 +179,7 @@ def pot(m,x,y,z,s=.27):
 
 def house(name,x,z,w,d,h,shop=False,variant=0):
     g=base_h(x,z);front=1 if x<0 else -1;fx=x+front*w*.5
-    layout['buildings'].append({'name':name,'rect':[x-w*.5-.22,z-d*.5-.22,w+.44,d+.44]})
+    layout['buildings'].append({'name':name,'rect':[x-w*.5-.22,z-d*.5-.22,w+.44,d+.44],'height':h})
     m=Mesh(name)
     m.box((x,g+.24,z),(w+.13,.48,d+.16),3,.69)
     m.box((x,g+h*.5+.30,z),(w,h,d),1,.83 if variant%3 else .71)
@@ -200,14 +201,27 @@ def house(name,x,z,w,d,h,shop=False,variant=0):
         for j in range(int(w/.24)):
             m.box((x-w*.5+.12+j*.24,g+.9,zz+side*.06),(.22,1.05,.05),0,random.uniform(.65,.88))
         # Gable-end room: divided glazing and shutters break the large plaster mass.
-        for wy in ([2.07,4.05] if h>4 else [2.07]):
+        for wy in ([2.07,4.05,6.55] if h>6.8 else ([2.07,4.05] if h>4 else [2.07])):
             m.box((x,g+wy,zz+side*.055),(w*.50,1.1,.07),14,.65)
             m.box((x,g+wy,zz+side*.10),(w*.46,.98,.025),7 if shop and wy<3 and side>0 else 6,.85)
+            if shop and wy<3 and side>0:layout['lights'].append({'position':[x,g+wy,zz+side*.26],'direction':[0,0,side],'size':[w*.23,.49],'radius':4.8,'energy':.85,'kind':'window'})
             for j in range(10):m.box((x-w*.23+j*w*.046,g+wy,zz+side*.14),(.034,1.06,.05),0,.62)
             for dy in [-.53,0,.53]:m.box((x,g+wy+dy,zz+side*.14),(w*.5,.06,.06),0,.60)
             for dx in [-w*.29,w*.29]:m.box((x+dx,g+wy,zz+side*.16),(.26,1.2,.10),0,.74)
             m.box((x,g+wy-.65,zz+side*.21),(w*.64,.12,.38),0,.77)
     roof(m,x,g+h+.34,z,w+1.15,d+1.03,1.45)
+    if h>6.8:
+        # Third-floor rooms, cantilever joists and rain hoods on both long sides.
+        for side in [-1,1]:
+            wall=x+side*w*.5
+            m.box((wall,g+5.55,z),(.16,.18,d+.12),0,.62)
+            for dz in [-d*.28,d*.26]:
+                window(m,wall+side*.09,g+6.55,z+dz,1.65,1.27,side,variant%3==0)
+                m.box((wall+side*.32,g+7.3,z+dz),(.75,.10,2.1),2,.74)
+                for dd in [-.65,.65]:m.beam((wall,g+6.95,z+dz+dd),(wall+side*.62,g+7.23,z+dz+dd),.045,0)
+        # Narrow aerial fixed to a roof bracket, with unequal horizontal arms.
+        m.beam((x,g+h+1.6,z-1),(x,g+h+3.2,z-1),.025,9)
+        for j in range(4):m.beam((x-.50+j*.07,g+h+2.7+j*.12,z-1),(x+.50-j*.07,g+h+2.7+j*.12,z-1),.014,9)
     # Recessed ground-floor frontage, glazed bays and a half-open shop door.
     for dz in [-d*.30,d*.28]:window(m,fx+front*.08,g+1.95,z+dz,1.6,1.25,front,lit=shop and dz<0)
     m.box((fx+front*.09,g+1.29,z),(.08,1.84,1.22),14,.60)
@@ -238,6 +252,7 @@ def house(name,x,z,w,d,h,shop=False,variant=0):
         sign(m,['三枝商店','山路食堂','米・茶','かすみ屋'][variant%4],(fx+front*1.15,g+3.04,z-.25),3.1,front)
         # An oval paper lantern and its dark bamboo hoops mark the open shop.
         lx,lz=fx+front*1.12,z+d*.34
+        layout['lights'].append({'position':[lx,g+1.945,lz],'direction':[0,0,0],'size':[0,0],'radius':4.7,'energy':1.25,'kind':'lantern'})
         m.beam((lx,g+2.65,lz),(lx,g+2.23,lz),.019,14)
         m.beam((lx,g+1.68,lz),(lx,g+2.21,lz),.21,7,r2=.20,steps=12)
         for yy in [1.69,1.80,1.95,2.10,2.20]:
@@ -260,13 +275,47 @@ def house(name,x,z,w,d,h,shop=False,variant=0):
         m.stone((xx,g+.01,zz),(.09,.045,.12),3,.65)
     m.finish()
 
-houses=[('Saegusa_general_store',-5.9,6,6,10,5.25,True),('Yamaji_tea_house',5.8,-.5,5.8,9,5.65,True),
-('Shuttered_home',-6.5,-8.5,6.4,8,4.85,False),('Old_rice_merchant',6.2,-14,6.2,10,4.8,True),
+houses=[('Saegusa_general_store',-5.9,6,6,10,8.15,True),('Yamaji_tea_house',5.8,-.5,5.8,9,7.20,True),
+('Shuttered_home',-6.5,-8.5,6.4,8,5.85,False),('Old_rice_merchant',6.2,-14,6.2,10,8.65,True),
 ('Narrow_house',-5.7,-22,5.4,8,3.1,False),('Corner_shop',-6.6,-36,6.6,10,5.4,True),
-('Balcony_house',6.3,-32,6.2,9,5.7,False),('Last_lantern',5.8,-46,5.5,8,3.4,False),
+('Balcony_house',6.3,-32,6.2,9,7.7,False),('Last_lantern',5.8,-46,5.5,8,4.4,False),
 ('North_house',-6.4,-58,6.2,9,5.3,False),('Upper_house',6.4,-64,6.2,9,4.7,False),
 ('Entry_home',-8,25,6.6,9,4.6,False),('Southern_house',9,30,7,10,3.6,False)]
 for i,args in enumerate(houses):house(*args,variant=i)
+# A compact outer row closes the west block. A paved return lane runs between
+# these frontages and the established rear garden walls, joining both ends.
+for i,(z,h,d) in enumerate([(6,7.1,10),(-8,9.0,10),(-25,5.7,12),(-40,7.5,10)]):
+    house('West_block_%02d'%i,-18,z,3.4,d,h,i==0,i+12)
+for i,(z,h) in enumerate([(-2,9.4),(-19,7.2),(-37,10.1)]):
+    house('East_backstreet_%02d'%i,15.2,z,4.8,12,h,False,i+17)
+layout['loop_route']=[[0,17],[-14.3,17],[-14.3,-50],[0,-50],[0,17]]
+layout['paved_routes']=[[-16.0,-52,3.4,71],[-16.,15,16.,4.],[-16.,-52,16.,4.]]
+lane=Mesh('West_return_lane_and_cross_streets')
+for x,z,w,d in layout['paved_routes']:
+    # Tile the union once so overlapping corner rectangles never z-fight.
+    for ix in range(math.ceil(w)):
+        for iz in range(math.ceil(d)):
+            xx=x+ix;zz=z+iz
+            right=min(x+w,xx+1);end=min(z+d,zz+1)
+            if x==-16. and w==16.:
+                if right<=-12.6:continue
+                xx=max(xx,-12.6)
+            lane.face([(xx,base_h(xx,zz)+.024,zz),(xx,base_h(xx,end)+.024,end),(right,base_h(right,end)+.024,end),(right,base_h(right,zz)+.024,zz)],3,.70+random.random()*.12)
+for x in [-16.05,-12.55]:
+    for z in range(-48,15):
+        lane.box((x,base_h(x,z)+.065,z),(.13,.13,.96),3,.65)
+# Gated side alleys have visible depths and actual collidable closures.
+layout['blocked_alleys']=[]
+for z,width in [(-2.8,2.8),(-28.5,3.4)]:
+    x=-10.55;y=base_h(x,z)
+    for zz in [z-width/2,z+width/2]:lane.box((x,y+1.1,zz),(.15,2.2,.15),0,.60)
+    for yy in [.22,1.82]:lane.box((x,y+yy,z),(.10,.10,width),9,.72)
+    for j in range(int(width/.16)):
+        lane.box((x,y+1.0,z-width/2+.09+j*.16),(.07,1.65,.055),9,.66)
+    lane.beam((x,y+.25,z-width/2),(x,y+1.78,z+width/2),.027,9)
+    rect=[x-.20,z-width/2,.40,width]
+    layout['obstacles'].append(rect);layout['blocked_alleys'].append(rect)
+lane.finish()
 # Farm buildings and distant rooflines make the village part of a wider settlement.
 for i,(x,z,w,d,h) in enumerate([(-18,-70,6,8,3.2),(18,-85,6,9,3.1),(-37,78,6,8,3.3),(45,77,7,8,3.5),(-19,45,4,6,2.7),(17,11,3.6,5,2.6)]):
     house('Field_shed_%02d'%i,x,z,w,d,h,False,i)
@@ -284,6 +333,7 @@ for i,z in enumerate([18,-2,-23,-45,-70,43,68]):
         utilities.line([(x,y+5.0,z),(x+.55,y+5.25,z),(x+.8,y+5.15,z)],.032,9)
         utilities.box((x+.8,y+5.12,z),(.40,.10,.22),14,.80)
         utilities.box((x+.8,y+5.065,z),(.28,.025,.16),7,.85)
+        layout['lights'].append({'position':[x+.8,y+5.02,z],'direction':[0,-1,0],'size':[0,0],'radius':7.2,'energy':1.8,'kind':'street'})
     poles.append((x,y+h,z))
 poles.sort(key=lambda p:p[2])
 for a,b in zip(poles,poles[1:]):
@@ -295,16 +345,22 @@ for a,b in zip(poles,poles[1:]):
 utilities.finish()
 
 props=Mesh('Lane_drainage_and_remnants')
+layout['drainage_crossings']=[]
 for side in [-1,1]:
     x=side*2.32
     for z in range(-78,38):
+        if side<0 and (15<=z<=19 or -52<=z<=-48):continue
         y=base_h(x,z)
         props.box((x,y+.025,z),(.32,.12,.96),3,.59)
         props.box((x-side*.14,y+.12,z),(.09,.15,.98),3,.79)
         if z%4==0:
             for j in range(6):props.box((x,y+.107,z-.38+j*.14),(.30,.015,.028),9,.72)
     for z in [14,-18,-50]:
-        for j in range(6):props.box((side*3.1,base_h(side*3.1,z)+.15,z-.43+j*.16),(2.0,.08,.14),0,.81)
+        if side<0 and z==-50:continue # The paved junction replaces this old crossing.
+        ground=base_h(side*3.1,z)
+        layout['drainage_crossings'].append({'rect':[side*3.1-1,z-.50,2.,.94],'height':ground+.30})
+        for j in range(6):props.box((side*3.1,ground+.26,z-.43+j*.16),(2.0,.08,.14),0,.81)
+        for dx in [-.76,.76]:props.box((side*3.1+dx,ground+.10,z-.03),(.16,.24,.94),0,.65)
 # Bicycle wheels, fork and visibly open frame at the tea house.
 bx,bz=2.72,-3.5;by=base_h(bx,bz)
 for zz in [bz-.48,bz+.48]:
@@ -437,6 +493,10 @@ for i in range(100):
     layout['trees'].append([x,terrain_h(x,z),z,random.uniform(.7,1.4),i%3,random.random()*math.tau])
 
 # Store readable source. GLB keeps house chunks for occlusion/distance culling.
+def in_route(tree):
+    x,z=tree[0],tree[2]
+    return any(a-.7<x<a+w+.7 and b-.7<z<b+d+.7 for a,b,w,d in layout['paved_routes']) or any(a<x<a+w and b<z<b+d for a,b,w,d in [o['rect'] for o in layout['buildings']])
+layout['trees']=[tree for tree in layout['trees'] if not in_route(tree)]
 objects=[o for o in bpy.context.scene.objects if o.type=='MESH']
 bpy.ops.object.camera_add(location=xyz((0,2.1,15)))
 cam=bpy.context.object;cam.name='Street_composition';cam.rotation_euler=(Vector(xyz((0,2,-25)))-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.lens=28;bpy.context.scene.camera=cam

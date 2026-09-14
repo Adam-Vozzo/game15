@@ -22,11 +22,13 @@ func surface_height(_x: float,_z: float) -> float:
     return .91
 
 static func wave_height(p: Vector2,t: float) -> float:
-    var group := .78+.22*sin(p.dot(Vector2(.043,-.027))-t*.31)
-    var a := p.dot(Vector2(.23,.34))-t*1.65+.38*sin(p.dot(Vector2(.065,-.11))-t*.47)
-    var b := p.dot(Vector2(-.41,.19))-t*1.97+.29*sin(p.dot(Vector2(.13,.049))+t*.38)
-    var c := p.dot(Vector2(.68,.53))-t*2.8
-    return group*1.10*(sin(a)+.22*cos(2*a))+.55*(sin(b)+.20*cos(2*b))+.19*sin(c)+.24*sin(p.dot(Vector2(-.17,.073))-t*.91)+.12*sin(p.dot(Vector2(.91,-.38))-t*3.43)
+    var q := p+Vector2(2.7*sin(p.dot(Vector2(.031,.071))+t*.13),2.1*sin(p.dot(Vector2(-.053,.029))-t*.17))
+    var group := .58+.26*sin(p.dot(Vector2(.073,-.047))-t*.31)+.16*cos(p.dot(Vector2(.039,.081))+t*.23)
+    var cross_group := .61+.39*sin(p.dot(Vector2(-.067,.093))+t*.27)
+    var a := q.dot(Vector2(.23,.34))-t*1.65+.73*sin(p.dot(Vector2(.065,-.11))-t*.47)
+    var b := q.dot(Vector2(-.41,.19))-t*1.97+.64*sin(p.dot(Vector2(.13,.049))+t*.38)
+    var c := q.dot(Vector2(.68,.53))-t*2.8+.41*sin(p.y*.17-t*.29)
+    return group*1.23*(sin(a)+.19*sin(2*a))+.71*cross_group*(sin(b)+.17*sin(2*b))+.21*sin(c)+.32*sin(q.dot(Vector2(-.17,.073))-t*.91)+.13*sin(q.dot(Vector2(.91,-.38))-t*3.43)+.18*sin(p.dot(Vector2(.117,-.263))-t*1.38+.6*sin(p.x*.083+t*.19))
 
 func _sea_stack(height: float,width: float) -> ArrayMesh:
     var st := SurfaceTool.new()
@@ -250,7 +252,7 @@ func _create_interface() -> void:
     footer.text = "Keep the light in sight"
     _button("Gentle motion" if gentle_motion else "Full motion",func():
         gentle_motion = not gentle_motion
-        controls.get_child(3).text = "Gentle motion" if gentle_motion else "Full motion"
+        controls.get_child(4).text = "Gentle motion" if gentle_motion else "Full motion"
     )
 
 func _resize() -> void:

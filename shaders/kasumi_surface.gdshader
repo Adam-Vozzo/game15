@@ -9,9 +9,13 @@ uniform float cloth = 0.0;
 uniform float plant = 0.0;
 uniform float mountain = 0.0;
 uniform float terrain_surface = 0.0;
-uniform vec4 shelter_bounds[20];
+uniform vec4 shelter_bounds[40];
 uniform int shelter_count = 0;
-uniform vec4 lamp_anchors[12];
+uniform vec4 lamp_anchors[64];
+uniform vec4 lamp_shapes[64];
+uniform vec2 lamp_sizes[64];
+uniform int lamp_count = 0;
+uniform float light_spill = 1.0;
 #include "res://shaders/kasumi_sky.gdshaderinc"
 varying vec3 world_p;
 varying vec3 world_n;
@@ -72,7 +76,7 @@ void fragment() {
     if(terrain_surface>.5){
         // Ground contact shade is anchored to the masonry, independent of camera/depth samples.
         float shelter=0.;
-        for(int i=0;i<20;i++){
+        for(int i=0;i<40;i++){
             if(i>=shelter_count){break;}
             vec4 bounds=shelter_bounds[i];
             vec2 q=abs(world_p.xz-(bounds.xy+bounds.zw*.5))-bounds.zw*.5;
@@ -89,12 +93,23 @@ void fragment() {
     }
     if (tile==7) { color= pigment*vec3(1.15,.88,.60); }
     else if(mountain<.5){
-        for(int i=0;i<12;i++){
-            vec3 delta=lamp_anchors[i].xyz-world_p;
+        for(int i=0;i<64;i++){
+            if(i>=lamp_count){break;}
+            vec3 source=lamp_anchors[i].xyz;
+            vec3 outward=lamp_shapes[i].xyz;
+            vec3 from_source=world_p-source;
+            // Glazing lights only the exterior half-space. Use the closest point
+            // on its area, so broad windows light their sills and adjacent paving.
+            float exterior=length(outward)>.5?smoothstep(-.12,.22,dot(from_source,outward)):1.;
+            vec3 tangent=vec3(-outward.z,0.,outward.x);
+            source+=tangent*clamp(dot(from_source,tangent),-lamp_sizes[i].x,lamp_sizes[i].x);
+            source.y+=clamp(from_source.y,-lamp_sizes[i].y,lamp_sizes[i].y);
+            vec3 delta=source-world_p;
             float distance=length(delta);
-            float falloff=pow(1.-smoothstep(.2,3.6,distance),2.);
+            if(distance>=lamp_shapes[i].w || exterior<=0.){continue;}
+            float falloff=pow(1.-smoothstep(.15,lamp_shapes[i].w,distance),2.)/(1.+distance*distance*.16);
             float facing=max(dot(normalize(world_n),delta/max(distance,.01)),0.);
-            color+=pigment*vec3(.65,.30,.09)*falloff*(.2+.8*facing)*lamp_anchors[i].w;
+            color+=pigment*vec3(1.,.48,.15)*falloff*(.12+.88*facing)*lamp_anchors[i].w*exterior*light_spill;
         }
     }
     if (tile==4 || tile==3) {

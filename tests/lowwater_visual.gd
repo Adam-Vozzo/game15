@@ -27,6 +27,14 @@ func run() -> void:
     await settle()
     var frozen: Image = scene.view.get_texture().get_image()
     assert(first.get_data()==frozen.get_data(),"Paused fog, moss and reflection must remain visually frozen")
+    var motes: MeshInstance3D = scene.world.find_child("LightMotes",true,false)
+    var leaves: MeshInstance3D = scene.world.find_child("CanopyLeaves",true,false)
+    assert(motes!=null and leaves!=null,"Source-authored motes and canopy leaves must survive GLB import")
+    motes.visible=false;leaves.visible=false
+    await settle()
+    var without_drift: Image=scene.view.get_texture().get_image()
+    assert(first.get_data()!=without_drift.get_data(),"Air particles must contribute to the actual rendered scene")
+    motes.visible=true;leaves.visible=true
     scene.mist.set_shader_parameter("shaft_strength",0.)
     await settle()
     var without_shafts: Image=scene.view.get_texture().get_image()
@@ -67,7 +75,24 @@ func run() -> void:
             if overhead.get_pixel(x,y).get_luminance()<.6: canopy_pixels+=1
     var coverage:=float(canopy_pixels)/samples
     assert(coverage>.65 and coverage<.97,"Overhead foliage needs both enclosure and visible skylight gaps")
-    print("PASS: rendered black/white range, frozen Pause, visible canopy shafts and ground mist, evolving atmosphere, planar reflection, balanced leaf faces and porous overhead canopy")
+    # Check the sparse leaf cycles separately from motes, which could otherwise
+    # make a combined visibility comparison pass while every leaf was hidden.
+    var leaf_visible := false
+    scene.camera.position=Vector3(6.4,2.5,17)
+    scene.heading=.16;scene.target_heading=.16
+    scene.pitch=.18;scene.target_pitch=.18
+    for t in [0.,8.,16.,24.,32.,40.,48.,56.,64.]:
+        scene.time=t;leaves.visible=true
+        await settle()
+        var with_leaves: Image=scene.view.get_texture().get_image()
+        leaves.visible=false
+        await settle()
+        if with_leaves.get_data()!=scene.view.get_texture().get_image().get_data():
+            leaf_visible=true
+            with_leaves.save_png("res://build-logs/revision-lowwater-leaf-visible.png")
+            break
+    assert(leaf_visible,"Occasional falling leaves must be visible during their cycle")
+    print("PASS: rendered black/white range, frozen Pause, visible motes and falling leaves, canopy shafts and mist, evolving atmosphere, reflection, balanced leaf faces and porous canopy")
     quit(0)
 
 func image_difference(a: Image,b: Image) -> float:

@@ -1,6 +1,12 @@
 # Still — Atmosphere Channels
 
-Seven atmospheric places, modeled in **Blender** and rendered in **Godot 4**. A Wii-inspired channel menu brings them together: full-frame rounded image tiles, subtle scanlines, hover titles, a curved lower dock and a segmented local clock. Selecting a tile expands it to fill the screen; leaving shrinks the current scene back into its channel.
+**New: La Burrasca** — a torrential storm over a Calabrian coastal village, inspired by Roccella Ionica. A fortified lookout surveys a hilltop church and 75 shuttered houses on cut masonry terraces. Branching sky lightning briefly opens the rain and fog to reveal the roofs and sea; delayed thunder follows. Guarded stairs and seven paved piazzas descend 26 metres through town. Terracotta coppi, louvred shutters, braced iron balconies, stone portals, gutters, wet paving and runoff carry the architectural detail.
+
+Source: `blender/build_roccella.py`, editable `blender/roccella.blend`, `assets/models/roccella.glb`, `assets/data/roccella_layout.json`, original `Roccella*` textures and two storm audio files. Runtime: `roccella.tscn`, `scripts/roccella.gd`, `shaders/roccella_*`. Channel ID: `roccella`; review views: `stairs`, `reverse`, `church`, `balcony`, `coast`. Use `--roccella-time=6.42 --fixed-fps 60` for a lightning thumbnail at the standard capture frame. Native checks: `tests/roccella_visual.gd`; route and behaviour checks: `tests/roccella.gd`. Pause freezes the storm and both audio players; Reset returns to the lookout while retaining storm time.
+
+Ten atmospheric places, modeled in **Blender** and rendered in **Godot 4**. A Wii-inspired channel menu brings them together: full-frame rounded image tiles, subtle scanlines, hover titles, a curved lower dock and a segmented local clock. Selecting a tile expands it to fill the screen; leaving shrinks the current scene back into its channel.
+
+Every experience's settings includes a **Resolution** slider with a live pixel readout. The choice follows you between channels; 100% preserves the original scene detail, and higher settings increase it up to the display size. The interface stays sharp. The matching light loading screen shows real download progress. Use `tools/build.ps1` for publishing: it generates two lossless resource archives and their size manifest to stay within GitHub's file limit.
 
 ![Channel menu](previews/menu.png)
 
@@ -8,7 +14,7 @@ Seven atmospheric places, modeled in **Blender** and rendered in **Godot 4**. A 
 | --- | --- |
 | **The Still Moor** | Moonlight through rolling ground fog, wind through rooted grass and ferns, twisted trees and an eroded hollow. The darker grass and ground from the earlier revision are preserved. |
 | **Phuket, Blue Bay** | Sunny midday beneath a rich blue sky: towering limestone islands, an eroded sea arch, drifting mountain mist, sun flare, clear turquoise shallows, four independently steering schools of 48 fish and a swimming turtle. Coconut palms shade a working timber pier, tiled pavilion and painted stilt hut; a long-tail boat rocks at its mooring while seabirds circle overhead. |
-| **Kasumi Lane** | A rural valley at late dusk: two-storey timber shops, curved tiled eaves, lattice balconies, weathered signs, warm paper windows, lanterns, gutters, delivery crates and a bicycle. Warm window and lantern halos spill light onto nearby timber and paving. Side paths lead to flooded rice paddies, wheat, drying racks, a scarecrow, kitchen gardens and a wayside shrine. Wind, rain rings, low moving mist, wooded foothills and cloud breaks carry the atmosphere beyond the lane. |
+| **Kasumi Lane** | A compact town at late dusk: varied two- and three-storey timber shops, curved tiled eaves, lattice balconies, roof aerials, warm paper windows and lanterns. A paved backstreet returns to the main lane around a complete block, with gated side alleys and taller background buildings. Fields, kitchen gardens and a wayside shrine remain beyond the town edge, beneath low mist and wooded foothills. |
 
 | **Night Crossing** | A weathered wheelhouse in rough night seas: steep crossing swells, broken whitecaps, wave-driven pitch/roll/heave, eroded sea stacks and a rock arch, distant navigation light, window rivulets, rain, warm cabin lamp, compass, radio and a marked sea chart. Original looping surf, engine throb and timber creaks. A huge whale makes brief moonlit surfacing passes before diving beneath the waves. |
 
@@ -17,7 +23,7 @@ Seven atmospheric places, modeled in **Blender** and rendered in **Godot 4**. A 
 ![Phuket midday](assets/menu/coast.png)
 ![Kasumi Lane](assets/menu/town.png)
 
-All seven use original modeled geometry and textures in a deliberately reduced-resolution 3D viewport. Kasumi now uses researched PS1 art constraints: four 256×256 texture pages, limited palettes, vertex-colored shelter shading and stable perspective-correct architectural UVs. Its models prioritize silhouettes, joinery and readable detail. Phuket uses eight original 256×256 RGB555 material studies, stable surface mapping and authored vertex shading, with carefully modeled palm leaflets, timber joinery and limestone silhouettes. Kasumi and Phuket add no artificial vertex wobble or global film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
+All ten use original modeled geometry and textures. The Painted Mere uses fine ink, translucent watercolour and a higher-resolution scene viewport; the other channels retain their deliberately reduced-resolution treatment. Kasumi now uses researched PS1 art constraints: four 256×256 texture pages, limited palettes, vertex-colored shelter shading and stable perspective-correct architectural UVs. Its models prioritize silhouettes, joinery and readable detail. Phuket uses nine original 256×256 RGB555 material studies, stable surface mapping and authored vertex shading, with carefully modeled palm leaflets, timber joinery and limestone silhouettes. Kasumi and Phuket add no artificial vertex wobble or global film grain. Text and controls remain at display resolution. The environments are meant for slow wandering; there are no objectives or jump scares.
 
 See [Kasumi's hardware research and art decisions](art/PS1_ART_DIRECTION.md), including primary hardware references and the deliberate modern extensions. This is a PS1-inspired Godot experience, not a hardware-accurate console build.
 
@@ -44,7 +50,7 @@ The menu reflows for portrait and short landscape windows. The scene camera adju
 
 The complete web export is committed in **`docs/`**. In repository **Settings → Pages**, select **Deploy from a branch → main → /docs**, then **Save**. Pages configuration is left to the repository owner.
 
-No build workflow or custom server headers are needed. The single-threaded Compatibility export uses WebGL 2 and WebAssembly; see [Godot's web export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html). It loads approximately 40 MB of engine WebAssembly plus an approximately 62 MB game package before starting.
+No build workflow or custom server headers are needed. The single-threaded Compatibility export uses WebGL 2 and WebAssembly; see [Godot's web export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html). It loads approximately 40 MB of engine WebAssembly plus an approximately 129 MB game package before starting.
 
 ## Edit in Godot or Blender
 
@@ -108,6 +114,8 @@ Reimport preview images before exporting. Commit the source and rebuilt `docs/` 
 
 ## Validation
 
+Audio regressions include `tests/audio_pause.gd` for advancing playback, Pause/Resume, starting sound during Pause, loop boundaries and Reset. To measure the actual web audio backend without loud speaker output, run `node tools/serve_audio_probe.mjs` and open its local address. The diagnostic page counts source starts and buffer copies; ordinary playback must not restart every frame. The probe is excluded from the published game.
+
 ```sh
 godot --headless --path . --script tests/run.gd
 godot --headless --path . --script tests/channels.gd
@@ -124,7 +132,7 @@ godot --path . --script tests/occlusion.gd
 godot --path . --script tests/resize.gd
 ```
 
-The build runs input tests and round trips through all five channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 18 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. Shrine steps and landing heights agree with the walking surface, and solid garden walls block movement. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move, and architectural UVs and world-anchored foundation shading stay fixed across camera translation and rotation. Kasumi uses authored shelter shading and soft world-space contact shade instead of screen-space AO. Its shrine cap and stair treads do not overlap, avoiding coplanar flicker. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
+The build runs input tests and round trips through all ten channels, checking sound persistence, UI touch exclusion, emulated-mouse suppression, pause, town building bounds and scene cleanup. Kasumi additionally checks all 25 building footprints, 30 field heights, the connected main lane, imported vegetation roots and texture-page dimensions. Shrine steps and landing heights agree with the walking surface, and solid garden walls block movement. GPU tests confirm rice, wheat and verge roots remain anchored while their tips move, and architectural UVs and world-anchored foundation shading stay fixed across camera translation and rotation. Kasumi uses authored shelter shading and soft world-space contact shade instead of screen-space AO. Its shrine cap and stair treads do not overlap, avoiding coplanar flicker. Desktop, surrounding-landscape and portrait renders are inspected for framing and script/shader errors. The browser export is checked for scene loading, return-to-menu and pause. Its canvas buffer follows CSS dimensions to avoid unnecessary high-DPI rendering cost. The package is checked for WebAssembly/package headers, sizes, relative Pages paths and single-thread configuration.
 
 Physical iOS/Android devices have not been tested. Browser/GPU performance varies; touch devices use a smaller render budget and less moor vegetation. The imported world art remains the same on desktop and touch.
 
@@ -132,7 +140,7 @@ All environment geometry, textures and ambient audio were created for this proje
 
 ### Night Crossing reference and implementation
 
-Mood and first-person framing reference: [Sailing study by Ray_Ervian](https://x.com/ray_ervian/status/2097336882682380306). All shipped models, textures and audio are original; no video assets are included. The sea uses five crossing wave phases, slowly changing wave groups, warped phases and procedural crest foam with wind-carried spray cards. This is an atmospheric boat experience with bounded movement, not a vessel-navigation or fluid-dynamics simulator. The rocks include irregular stacks and an eroded arch. The model keeps named parts in Blender and exports seven material batches for the web. `tests/sea.gd` verifies motion, shared clocks, pause, gentle motion, cabin boundaries and reset.
+Mood and first-person framing reference: [Sailing study by Ray_Ervian](https://x.com/ray_ervian/status/2097336882682380306). All shipped models, textures and audio are original; no video assets are included. The sea uses six crossing wave phases, slowly changing wave groups, warped phases and procedural crest foam with wind-carried spray cards. This is an atmospheric boat experience with bounded movement, not a vessel-navigation or fluid-dynamics simulator. The rocks include irregular stacks and an eroded arch. The model keeps named parts in Blender and exports seven material batches for the web. `tests/sea.gd` verifies motion, shared clocks, pause, gentle motion, cabin boundaries and reset.
 
 The hull samples the sea across its footprint, keeping the deck above adjacent crests; water masking is limited to below the solid deck so it cannot cut a visible hole out of a wave. Additional rock groups surround the boat on both sides and astern. Cabin lettering and repeated dot-shaped paint chips have been removed. Rain and window rivulets run downward; glass and spray render after the opaque atmosphere pass.
 
@@ -157,3 +165,19 @@ Run `godot --path . --script tests/lowwater_visual.gd` for native checks of blac
 `tools/review_interiors.ps1 -ImportAssets -Tests -AllViews` runs headless geometry/behaviour checks, native rendered Pause and lighting checks, and opening/reverse/ceiling/detail/portrait/time-offset captures. Review IDs are `laundry` and `reservoir`; `--interior-time=25` fixes the starting animation phase. Menu thumbnails are actual Godot captures, not the generated concept images.
 
 The revised interiors add warm, localized laundry lighting against the cold rainy street, shaped cars and layered storefronts, upper dryers, curved door glass, moving fabric, stocked folding stations and detailed furniture. Reservoir uses cracked aggregate concrete, jointed paving, submerged column footings, stronger shafts and deeper contrast. Its rounded drain outlet produces a continuous jet, splash particles and expanding rings in the receiving water. `--experience=reservoir --view=pipe` reviews the water interaction; native regression checks that it is visible and that no horizontal column footing coincides with the water plane.
+
+## Signal Grove
+
+A misty conifer forest with a winding, walkable trail, full drooping needle sprays and a feature fir made luminous by fine silver pixel cells. Subtle red through the apparent centre crosses through white to muted cyan toward the edges, mixed with neutral glints rather than solid colour bands. Local patches dim and recover over several seconds; detached square fragments drift upward and fade completely before respawning. The surrounding trees remain quiet, and the channel reuses the original moor wind ambience. Pause freezes the lights, fragments, mist and audio while leaving navigation available; Reset restores the opening camera without rewinding the effect.
+
+`blender/build_signal.py` regenerates `blender/signal_grove.blend`, the GLB, four original texture pages and the terrain/collision layout. The editable source retains 98 named rooted trees, 37,454 fixed light anchors and 1,600 rising fragments. The GPU orients each square around its fixed world anchor, with a close-range size cap. The user-requested colour gradient follows the viewer, while anchors and dimming patches remain fixed to the tree. The hillside and litter texture avoid repeated wave patterns; mip filtering reduces ground shimmer. The rising pass renders after the scene fog and applies matching distance attenuation. No reference photograph is bundled.
+
+Review: `tools/review_signal.ps1 -Godot <executable>` runs native effect checks and captures the opening, close, reverse, side, underneath, trail, ground, foliage, portrait and short landscape views. `-Clip` also captures nine seconds of frames under `build-logs/signal-clip/`. Command-line scene ID: `--experience=signal`; a fixed clock can be set with `--signal-time=13.4`. The standard build includes its route, terrain, collision, drooping foliage, Pause/Resume and Reset regression and all eight channel round trips.
+
+### The Painted Mere
+
+A ninth channel interprets the supplied watercolour-and-ink references as a white-horizon wetland: a supported timber walkway, cupped pink lotus flowers, transparent purple crowns and a small conservatory. Fine geometric pen marks, layered pigment washes, mint colour bleed and world-anchored paper grain give the scene its illustration treatment. Slow water glazes, rising bubble outlines and an original quiet water/bird loop follow Pause; Reset retains scene time.
+
+`blender/build_painted.py` regenerates the editable `blender/painted_mere.blend`, GLB, paper study, route layout and audio. Runtime: `scripts/painted.gd`, `painted.tscn`, and `shaders/painted_*`. See [the technique and tool decisions](art/PAINTED_MERE.md). Run `tests/painted.gd` for route/collision/clock checks and `tests/painted_visual.gd` in native Godot for visual/Pause checks and multi-angle captures. The new channel shares desktop/touch controls and appears in the responsive menu.
+
+The Painted Mere now includes nine ink-lined flamingos with gentle independent neck movements, standing and one-leg poses, and occasional pigment spills beyond selected flower, leaf, tree and bird outlines. The wildlife remains Blender-authored; animation and sound follow Pause. See `art/PAINTED_MERE.md` for the overflow and wildlife source details.

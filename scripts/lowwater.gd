@@ -66,6 +66,17 @@ func _create_environment() -> void:
     water_material = ShaderMaterial.new()
     water_material.shader = load("res://shaders/lowwater_water.gdshader")
     for part in art.find_children("*","MeshInstance3D",true,false):
+        if part.name in ["LightMotes","CanopyLeaves"]:
+            var drift := ShaderMaterial.new()
+            drift.shader = load("res://shaders/lowwater_drift.gdshader")
+            drift.set_shader_parameter("leaves",part.name=="CanopyLeaves")
+            drift.set_shader_parameter("sun_depth",load("res://assets/textures/LowwaterSunDepth.png"))
+            drift.render_priority = 127
+            part.material_override = drift
+            part.extra_cull_margin = 13.
+            part.layers = 2
+            landscape_materials.append(drift)
+            continue
         if "CanalWater" in part.name:
             part.material_override = water_material
             part.layers = 2
@@ -97,6 +108,7 @@ func _create_camera() -> void:
     target_pitch = .07
     pitch = .07
     mist.shader = load("res://shaders/lowwater_atmosphere.gdshader")
+    mist.render_priority = 100 # Motes/leaves at 127 must follow the fog composite.
     mist.set_shader_parameter("sun_depth",load("res://assets/textures/LowwaterSunDepth.png"))
     mist.set_shader_parameter("fog_steps",28 if mobile else 48)
     camera.get_child(0).layers = 4
