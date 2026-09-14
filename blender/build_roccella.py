@@ -30,10 +30,10 @@ def terrain(x,z):
     return y
 
 mats={}
-for kind,base in {'Stucco':(.70,.65,.53),'Rose':(.59,.39,.32),'Ochre':(.66,.50,.30),'Stone':(.44,.46,.42),'Rock':(.30,.33,.29),'Tile':(.39,.20,.14),'Paving':(.34,.36,.34),'Wood':(.16,.23,.21),'Iron':(.13,.16,.17),'Dark':(.065,.075,.075),'Light':(1,.57,.20),'Sea':(.16,.24,.27),'Rain':(.6,.7,.8)}.items():
+for kind,base in {'Stucco':(.70,.65,.53),'Rose':(.59,.39,.32),'Ochre':(.66,.50,.30),'Stone':(.44,.46,.42),'Rock':(.30,.33,.29),'Tile':(.39,.20,.14),'Paving':(.34,.36,.34),'Wood':(.16,.23,.21),'Iron':(.13,.16,.17),'Dark':(.065,.075,.075),'Light':(1,.57,.20),'Sea':(.16,.24,.27),'Rain':(.6,.7,.8),'Puddle':(.15,.22,.25),'Splash':(.6,.7,.8),'Runoff':(.4,.55,.65)}.items():
     mat=bpy.data.materials.new('Roccella'+kind);mat.diffuse_color=(*base,1);mat.use_nodes=True
     bs=mat.node_tree.nodes.get('Principled BSDF');bs.inputs['Base Color'].default_value=(*base,1)
-    if kind not in ['Light','Rain','Sea','Dark','Iron']:
+    if kind not in ['Light','Rain','Sea','Dark','Iron','Puddle','Splash','Runoff']:
         pixels=[]
         for y in range(256):
             for x in range(256):
@@ -299,8 +299,43 @@ for i in range(24000):
     y=random.uniform(0,1)
     # Degenerate source quads are expanded around fixed anchors by rain shader.
     p=(x,y,z);active['Rain'].face([p,p,p,p],[(0,0),(1,0),(1,1),(0,1)])
+# Water remains attached to its own terrace, never bridging different levels.
+# Dedicated randomness keeps the existing town and rain anchors unchanged.
+water_rng=random.Random(91426);puddles=[];splash_anchors=[];runoff_count=0
+group('Standing water and flooded corners')
+def puddle(x,z,rx,rz,floor,depth):
+    y=floor+depth
+    active['Puddle'].face([(x-rx,y,z-rz),(x-rx,y,z+rz),(x+rx,y,z+rz),(x+rx,y,z-rz)],[(0,0),(0,1),(1,1),(1,0)])
+    puddles.append(dict(x=x,z=z,rx=rx,rz=rz,y=y,floor=floor,depth=depth))
+for r in walk:
+    w=r['x1']-r['x0'];d=r['z1']-r['z0'];y=r['y']
+    if w>6 and d>3:
+        middle_x=(r['x0']+r['x1'])/2;middle_z=(r['z0']+r['z1'])/2
+        puddle(middle_x+.4,middle_z-.25,min(w*.28,3.8),min(d*.31,1.9),y,.025)
+        for side in [-1,1]:
+            rx=min(2.8,w*.22);rz=min(1.65,d*.24)
+            x=r['x0']+rx+.18 if side<0 else r['x1']-rx-.18
+            z=r['z0']+rz+.18 if side>0 else r['z1']-rz-.18
+            puddle(x,z,rx,rz,y,.065 if side>0 else .045)
+    # Impacts are anchored in the actual paving and clear the masonry edges.
+    for j in range(max(2,int(w*d*1.8))):
+        x=water_rng.uniform(r['x0']+.18,r['x1']-.18)
+        z=water_rng.uniform(r['z0']+.06,r['z1']-.06)
+        if any(a<x<b and c<z<e for a,b,c,e in obstacles):continue
+        sy=y+.025
+        for p in puddles:
+            if abs(p['floor']-y)<.01 and ((x-p['x'])/p['rx'])**2+((z-p['z'])/p['rz'])**2<.72:sy=max(sy,p['y']+.01)
+        anchor=(x,sy,z);splash_anchors.append(anchor)
+        active['Splash'].face([anchor]*4,[(0,0),(1,0),(1,1),(0,1)])
+    if abs(d-.4)<.001 and any(abs(q['z1']-r['z0'])<.001 and .21<y-q['y']<.23 for q in walk):
+        # Narrow spills overlap each real riser and terminate on the next tread.
+        for x in [-2.28,2.10]:
+            z=r['z0']-.012
+            active['Runoff'].face([(x-.10,y+.02,z),(x+.10,y+.02,z),(x+.13,y-.225,z),(x-.09,y-.225,z)],[(0,0),(1,0),(1,1),(0,1)])
+            runoff_count+=1
+
 group('Finished')
-layout=dict(buildings=buildings,lamps=lamps[:24],walk=walk,guards=guards,obstacles=obstacles,footings=footings,piazzas=piazzas,bottom_y=bottom_y,church=[cx,cy,cz])
+layout=dict(buildings=buildings,lamps=lamps[:24],walk=walk,guards=guards,obstacles=obstacles,footings=footings,piazzas=piazzas,puddles=puddles,splash_anchors=splash_anchors,runoff_count=runoff_count,bottom_y=bottom_y,church=[cx,cy,cz])
 (ROOT/'assets/data/roccella_layout.json').write_text(json.dumps(layout,indent=2))
 bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'blender/roccella.blend'))
 for kind in mats:

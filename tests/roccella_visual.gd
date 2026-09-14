@@ -1,6 +1,7 @@
 extends SceneTree
 func _initialize() -> void:call_deferred("run")
 func capture(label: String) -> Image:
+    current_scene._update_water_reflection()
     for i in range(5):await process_frame
     await RenderingServer.frame_post_draw
     var img:Image=current_scene.view.get_texture().get_image()
@@ -35,6 +36,10 @@ func run() -> void:
     var rain:=await capture("rain-evolved")
     assert(difference(dark,rain)>.001,"Rain and fog must visibly move between strikes")
     var shots:={
+        "wet-plaza":[Vector3(5,21.89,-5.6),Vector3(-.46,PI,0)],
+        "wet-corner":[Vector3(6,21.89,-2.3),Vector3(-.65,-.45,0)],
+        "wet-stairs":[Vector3(1.5,24.75,10),Vector3(-.60,0,0)],
+        "wet-risers":[Vector3(0,21.89,-5),Vector3(.12,PI,0)],
         "piazza":[Vector3(6,23.87,6),Vector3(-.18,.72,0)],
         "piazza-reverse":[Vector3(-5,19.91,-13),Vector3(.15,PI,0)],
         "church-foundation":[Vector3(-18,22,-45),Vector3(.25,2.4,0)],
@@ -51,6 +56,24 @@ func run() -> void:
     for label in shots:
         s.camera.position=shots[label][0];s.camera.rotation=shots[label][1]
         await capture(label)
+    s.camera.position=shots["wet-corner"][0];s.camera.rotation=shots["wet-corner"][1]
+    s.time=5.;s._process(0.)
+    # _process restores the walk camera; set this review angle afterwards.
+    s.camera.position=shots["wet-corner"][0];s.camera.rotation=shots["wet-corner"][1]
+    var wet:=await capture("wet-dark")
+    var water_parts:Array[Node]=[]
+    for part in s.world.find_children("*","MeshInstance3D",true,false):
+        if "Puddle" in part.name or "Splash" in part.name or "Runoff" in part.name:
+            water_parts.append(part);part.hide()
+    var without_water:=await capture("wet-disabled")
+    assert(difference(wet,without_water)>.004,"Standing water and impacts must visibly change the ground")
+    for part in water_parts:part.show()
+    var restored:=await capture("wet-restored")
+    assert(difference(wet,restored)<.00001,"Paused water must restore the identical ripple and splash state")
+    # Advance just water: rain/fog cannot make this animation check pass.
+    for part in water_parts:part.material_override.set_shader_parameter("scene_time",5.18)
+    var rippled:=await capture("wet-ripples-evolved")
+    assert(difference(restored,rippled)>.00005,"Water rings and splash droplets must visibly evolve")
     s._reset();s._process(0.)
     for moment in [6.9,7.08,7.3,7.8,9.0,18.48,28.57,34.08,50.08]:
         s.time=moment;s._process(0.)
@@ -59,5 +82,7 @@ func run() -> void:
     root.size=Vector2i(390,844)
     for i in range(15):await process_frame
     await capture("portrait")
+    s.camera.position=shots["wet-corner"][0];s.camera.rotation=shots["wet-corner"][1]
+    await capture("wet-portrait")
     print("PASS La Burrasca GPU: frozen Pause, lightning reveal, evolving storm, sides, underside and portrait captures")
     quit(0)
