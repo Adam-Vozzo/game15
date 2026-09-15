@@ -1,5 +1,13 @@
 # Kasumi — hardware research and art direction
 
+## Verdant Terminus — sunlit flooded station
+
+The first residents are original jade lily-sprout creatures inspired by the user's chao reference. Their Hunyuan body is reduced and skinned in Blender, with compact colour studies, separate eye controls and gentle authored gestures. Keep the oversized head silhouette, planted feet and readable eyes. Shoulder weights must follow the diagonal arm rather than dragging the belly during a wave. Three source-authored placements reuse one rigged asset with independent timing; motion follows the shared Pause/Reset clock.
+
+The supplied illustration guides open-roof composition, lush growth and turquoise flooded tracks. This is an original eleventh scene with three connected raised platforms. Sunlight enters the fully open centre, framed by bare trusses and jagged perimeter roof remains. Rooted trees and dense understory reclaim the structure; use olive and lime variation without fluorescent grass or radial starburst crowns. Every twig reaches a branch, every vine starts on a beam or roof, and columns/rails agree with the source-exported walking data.
+
+The user's local Hunyuan3D 2.1 generates the bespoke carriage and root clock. Blender repairs and reduces these meshes, authors fixed UV materials, and remains the editable source. The raw source, original generated references, inference records and exact prompts are documented in [station provenance](station/README.md). Do not replace these with ordinary primitive props or use raw inference meshes at runtime. Review all generated asset sides: a silhouette bounding box alone is insufficient to prove the reduced geometry survived processing. The menu thumbnail is an actual Godot render.
+
 ## La Burrasca — Calabrian coastal storm
 
 Terrain revision: level building aprons and deep retaining walls replace the original intersecting slope. Seven broad paved piazzas alternate with short descending flights; visible masonry/iron guards follow the entire outer route boundary and leave connected stair mouths open. Walking heights and guard collision use the same source-exported rectangles and segments. The church forecourt is separated from the rose house. Irregular branching sky streaks appear briefly in fixed directions during lightning; they are depth-occluded by the architecture.

@@ -4,7 +4,7 @@ boot_splash/show_image=false
 boot_splash/bg_color=Color(0.929,0.945,0.953,1)
 run/main_scene="res://menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/description="Seven atmospheric channels, from a rainy night laundromat to an immense reservoir of columns. Built in Blender and Godot."
+config/description="Eleven atmospheric channels, including a sunlit flooded station reclaimed by nature. Built in Blender and Godot."
 
 [display]
 window/size/viewport_width=1280

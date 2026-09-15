@@ -1,0 +1,21 @@
+{
+  "generator": "Local ComfyUI Hunyuan3D 2.1",
+  "seed": 9141503,
+  "raw_triangles": 1149464,
+  "game_triangles": 9188,
+  "bones": 12,
+  "height": 1.15,
+  "actions": {
+    "Idle": 4.0,
+    "Look": 6.0,
+    "Wave": 5.0,
+    "Doze": 8.0
+  },
+  "texture_pages": [
+    512,
+    512
+  ],
+  "weights": "normalized, maximum three bones per vertex",
+  "origin": "planted feet at zero",
+  "background_removed": true
+}

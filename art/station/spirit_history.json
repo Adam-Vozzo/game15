@@ -1,0 +1,179 @@
+{
+  "1d9e348d-0744-4779-a6b5-957d5ae5dab9": {
+    "prompt": [
+      0,
+      "1d9e348d-0744-4779-a6b5-957d5ae5dab9",
+      {
+        "1": {
+          "class_type": "ImageOnlyCheckpointLoader",
+          "inputs": {
+            "ckpt_name": "hunyuan_3d_v2.1.safetensors"
+          }
+        },
+        "2": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "still_station_spirit.png"
+          }
+        },
+        "3": {
+          "class_type": "ModelSamplingAuraFlow",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "shift": 1
+          }
+        },
+        "4": {
+          "class_type": "CLIPVisionEncode",
+          "inputs": {
+            "clip_vision": [
+              "1",
+              1
+            ],
+            "image": [
+              "2",
+              0
+            ],
+            "crop": "none"
+          }
+        },
+        "5": {
+          "class_type": "Hunyuan3Dv2Conditioning",
+          "inputs": {
+            "clip_vision_output": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "EmptyLatentHunyuan3Dv2",
+          "inputs": {
+            "resolution": 4096,
+            "batch_size": 1
+          }
+        },
+        "7": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "3",
+              0
+            ],
+            "seed": 9141503,
+            "steps": 30,
+            "cfg": 5,
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "positive": [
+              "5",
+              0
+            ],
+            "negative": [
+              "5",
+              1
+            ],
+            "latent_image": [
+              "6",
+              0
+            ],
+            "denoise": 1
+          }
+        },
+        "8": {
+          "class_type": "VAEDecodeHunyuan3D",
+          "inputs": {
+            "samples": [
+              "7",
+              0
+            ],
+            "vae": [
+              "1",
+              2
+            ],
+            "num_chunks": 8000,
+            "octree_resolution": 384
+          }
+        },
+        "9": {
+          "class_type": "VoxelToMesh",
+          "inputs": {
+            "voxel": [
+              "8",
+              0
+            ],
+            "algorithm": "surface net",
+            "threshold": 0.6
+          }
+        },
+        "10": {
+          "class_type": "SaveGLB",
+          "inputs": {
+            "mesh": [
+              "9",
+              0
+            ],
+            "filename_prefix": "still_station/spirit"
+          }
+        }
+      },
+      {
+        "client_id": "still-station-build",
+        "create_time": 1789391669369
+      },
+      [
+        "10"
+      ]
+    ],
+    "outputs": {
+      "10": {
+        "3d": [
+          {
+            "filename": "spirit_00001_.glb",
+            "subfolder": "still_station",
+            "type": "output"
+          }
+        ]
+      }
+    },
+    "status": {
+      "status_str": "success",
+      "completed": true,
+      "messages": [
+        [
+          "execution_start",
+          {
+            "prompt_id": "1d9e348d-0744-4779-a6b5-957d5ae5dab9",
+            "timestamp": 1789391669370
+          }
+        ],
+        [
+          "execution_cached",
+          {
+            "nodes": [],
+            "prompt_id": "1d9e348d-0744-4779-a6b5-957d5ae5dab9",
+            "timestamp": 1789391669380
+          }
+        ],
+        [
+          "execution_success",
+          {
+            "prompt_id": "1d9e348d-0744-4779-a6b5-957d5ae5dab9",
+            "timestamp": 1789391736449
+          }
+        ]
+      ]
+    },
+    "meta": {
+      "10": {
+        "node_id": "10",
+        "display_node": "10",
+        "parent_node": null,
+        "real_node_id": "10"
+      }
+    }
+  }
+}

@@ -23,7 +23,7 @@ func run() -> void:
         assert((Vector2(s.view.size)-Vector2(original)*.5).length()<2,"Slider must change actual render dimensions")
         assert(root.get_visible_rect().size==ui_size,"Resolution must not resize the interface")
         assert(s.time==time,"Changing resolution during Pause must not advance the scene")
-        if id in ["lowwater","laundry","reservoir"]:
+        if id in ["lowwater","laundry","reservoir","station"]:
             assert(s.reflection_view.size.x<s.view.size.x,"Reflection target must follow render size")
         s.resolution_slider.value=200
         await settle()

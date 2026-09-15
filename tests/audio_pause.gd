@@ -4,7 +4,7 @@ func _initialize() -> void:
     call_deferred("run")
 
 func run() -> void:
-    for id in ["laundry","signal","painted","reservoir","roccella"]:
+    for id in ["laundry","signal","painted","reservoir","roccella","station"]:
         change_scene_to_file("res://"+id+".tscn")
         for i in range(6):await process_frame
         var scene:Node=current_scene
