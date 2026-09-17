@@ -1,0 +1,30 @@
+{
+  "train": {
+    "model": "Hunyuan3D 2.1 local ComfyUI",
+    "raw_triangles": 907372,
+    "game_triangles": 13989,
+    "dimensions": [
+      3.0,
+      14.5,
+      4.0
+    ],
+    "materials": 4,
+    "vertices": 6863,
+    "uv": "fixed planar material atlas",
+    "grounded_origin": true
+  },
+  "clock": {
+    "model": "Hunyuan3D 2.1 local ComfyUI",
+    "raw_triangles": 1518734,
+    "game_triangles": 9963,
+    "dimensions": [
+      2.1500000953674316,
+      1.649999976158142,
+      3.25
+    ],
+    "materials": 2,
+    "vertices": 4663,
+    "uv": "fixed planar material atlas",
+    "grounded_origin": true
+  }
+}

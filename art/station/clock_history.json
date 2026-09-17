@@ -1,0 +1,181 @@
+{
+  "prompt": [
+    1,
+    "57dce583-9154-4abb-bbbd-3621b2f5cd90",
+    {
+      "1": {
+        "class_type": "ImageOnlyCheckpointLoader",
+        "inputs": {
+          "ckpt_name": "hunyuan_3d_v2.1.safetensors"
+        }
+      },
+      "2": {
+        "class_type": "LoadImage",
+        "inputs": {
+          "image": "still_station_clock.png"
+        }
+      },
+      "3": {
+        "class_type": "ModelSamplingAuraFlow",
+        "inputs": {
+          "model": [
+            "1",
+            0
+          ],
+          "shift": 1.0
+        }
+      },
+      "4": {
+        "class_type": "CLIPVisionEncode",
+        "inputs": {
+          "clip_vision": [
+            "1",
+            1
+          ],
+          "image": [
+            "2",
+            0
+          ],
+          "crop": "none"
+        }
+      },
+      "5": {
+        "class_type": "Hunyuan3Dv2Conditioning",
+        "inputs": {
+          "clip_vision_output": [
+            "4",
+            0
+          ]
+        }
+      },
+      "6": {
+        "class_type": "EmptyLatentHunyuan3Dv2",
+        "inputs": {
+          "resolution": 4096,
+          "batch_size": 1
+        }
+      },
+      "7": {
+        "class_type": "KSampler",
+        "inputs": {
+          "model": [
+            "3",
+            0
+          ],
+          "seed": 9141502,
+          "steps": 30,
+          "cfg": 5.0,
+          "sampler_name": "euler",
+          "scheduler": "normal",
+          "positive": [
+            "5",
+            0
+          ],
+          "negative": [
+            "5",
+            1
+          ],
+          "latent_image": [
+            "6",
+            0
+          ],
+          "denoise": 1.0
+        }
+      },
+      "8": {
+        "class_type": "VAEDecodeHunyuan3D",
+        "inputs": {
+          "samples": [
+            "7",
+            0
+          ],
+          "vae": [
+            "1",
+            2
+          ],
+          "num_chunks": 8000,
+          "octree_resolution": 384
+        }
+      },
+      "9": {
+        "class_type": "VoxelToMesh",
+        "inputs": {
+          "voxel": [
+            "8",
+            0
+          ],
+          "algorithm": "surface net",
+          "threshold": 0.6
+        }
+      },
+      "10": {
+        "class_type": "SaveGLB",
+        "inputs": {
+          "mesh": [
+            "9",
+            0
+          ],
+          "filename_prefix": "still_station/clock"
+        }
+      }
+    },
+    {
+      "client_id": "still-station-build",
+      "create_time": 1789387843007
+    },
+    [
+      "10"
+    ]
+  ],
+  "outputs": {
+    "10": {
+      "3d": [
+        {
+          "filename": "clock_00001_.glb",
+          "subfolder": "still_station",
+          "type": "output"
+        }
+      ]
+    }
+  },
+  "status": {
+    "status_str": "success",
+    "completed": true,
+    "messages": [
+      [
+        "execution_start",
+        {
+          "prompt_id": "57dce583-9154-4abb-bbbd-3621b2f5cd90",
+          "timestamp": 1789387845684
+        }
+      ],
+      [
+        "execution_cached",
+        {
+          "nodes": [
+            "1",
+            "3",
+            "6"
+          ],
+          "prompt_id": "57dce583-9154-4abb-bbbd-3621b2f5cd90",
+          "timestamp": 1789387845692
+        }
+      ],
+      [
+        "execution_success",
+        {
+          "prompt_id": "57dce583-9154-4abb-bbbd-3621b2f5cd90",
+          "timestamp": 1789387922807
+        }
+      ]
+    ]
+  },
+  "meta": {
+    "10": {
+      "node_id": "10",
+      "display_node": "10",
+      "parent_node": null,
+      "real_node_id": "10"
+    }
+  }
+}

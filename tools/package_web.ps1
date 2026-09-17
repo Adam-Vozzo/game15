@@ -40,7 +40,7 @@ try {
         $hash = [System.Security.Cryptography.MD5]::HashData($bytes)
         if ([Convert]::ToHexString($hash) -ne [Convert]::ToHexString($entry.Digest)) { throw "Pack checksum mismatch: $($entry.Name)" }
         $targetArchive = $archive
-        if ($entry.Name -match '^\.godot/imported/(lowwater|signal_grove)\.glb-.*\.scn$') { $targetArchive = $worldArchive }
+        if ($entry.Name -match '^\.godot/imported/(lowwater|signal_grove|azure_pilgrimage)\.glb-.*\.scn$') { $targetArchive = $worldArchive }
         $item = $targetArchive.CreateEntry($entry.Name,[System.IO.Compression.CompressionLevel]::Optimal)
         $item.LastWriteTime = [DateTimeOffset]::new(2026,1,1,0,0,0,[TimeSpan]::Zero)
         $destination = $item.Open()

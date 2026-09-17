@@ -82,7 +82,9 @@ const SCENES := {
     "reservoir": {"path":"res://reservoir.tscn", "title":"Reservoir of Columns", "subtitle":"Immense concrete · still water · distant daylight", "image":"res://assets/menu/reservoir.png"},
     "signal": {"path":"res://signal.tscn", "title":"Signal Grove", "subtitle":"A glitched tree · rising pixels · forest mist", "image":"res://assets/menu/signal.png"},
     "painted": {"path":"res://painted.tscn", "title":"The Painted Mere", "subtitle":"Watercolour · fine ink · a glasshouse on the water", "image":"res://assets/menu/painted.png"},
-    "roccella": {"path":"res://roccella.tscn", "title":"La Burrasca", "subtitle":"Calabrian rooftops · torrential rain · distant thunder", "image":"res://assets/menu/roccella.png"}
+    "roccella": {"path":"res://roccella.tscn", "title":"La Burrasca", "subtitle":"Calabrian rooftops · torrential rain · distant thunder", "image":"res://assets/menu/roccella.png"},
+    "station": {"path":"res://station.tscn", "title":"Verdant Terminus", "subtitle":"Flooded rails · open sky · nature after the last train", "image":"res://assets/menu/station.png"},
+    "azure": {"path":"res://azure.tscn", "title":"Azure Pilgrimage", "subtitle":"A white bird · turquoise falls · an endless flight", "image":"res://assets/menu/azure.png"}
 }
 func _ready() -> void:
     # The two exported archives are preloaded before startup. This keeps each

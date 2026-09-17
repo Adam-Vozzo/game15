@@ -1,0 +1,43 @@
+# Verdant Terminus asset provenance
+
+The user's flooded station illustration is composition and atmosphere reference only. Its pixels are not bundled. The environment is a new Blender-authored place, using the existing Godot Compatibility scene framework.
+
+## Local Hunyuan3D 2.1
+
+`train_raw.glb` and `clock_raw.glb` are actual local ComfyUI outputs from the installed `hunyuan_3d_v2.1.safetensors` model. Each object retains its API workflow, job id, completion history and input reference here. No paid 3D service was used. The node graph follows the [official ComfyUI 2.1 template](https://github.com/Comfy-Org/workflow_templates/blob/main/templates/3d_hunyuan3d-v2.1.json): image conditioning, 4096 latent resolution, AuraFlow shift 1, Euler/normal sampling at 30 steps and CFG 5, then a 384-resolution shape decode and surface-net mesh extraction. Seeds are 9141501 and 9141502.
+
+`tools/generate_station_assets.mjs` submits these jobs to the running local server. Generation is deliberately separate from routine asset rebuilding: rebuilds consume the preserved raw meshes, rather than silently running stochastic inference again.
+
+`blender/prepare_station_assets.py` removes the train's spurious ground plane and detached specks, welds close vertices, rebuilds a clean voxel surface, smooths voxel steps, decimates, validates topology, grounds origins and sets dimensions in metres. Fixed UVs and compact material pages cover the whole objects. The carriage gets original cream/green enamel, window, roof and undercarriage studies; the clock uses a reduced reference projection on its front and a bark study around its remaining sides. These are authored Blender materials, not Hunyuan texture inference. `asset_manifest.json` records the final actual counts. Editable reduced sources are `blender/station_train.blend` and `blender/station_clock.blend`.
+
+The complete generator appends those game assets, places the train wheels on the submerged track bed, and anchors additional greenery on their roofs. Runtime GLBs are `assets/models/station_train.glb`, `station_clock.glb`, and the assembled `verdant_terminus.glb`. Raw inference meshes and reference images are excluded from Godot importing and from the web export.
+
+## Generated object references
+
+Clock projection coverage is masked before baking: the neutral studio backdrop is excluded, foreground colours pad the UV edges and holes, and uncovered polygons use the bark material. The ivory dial is preserved. Roof gardens sample the reduced train's actual triangles at both fixed base vertices of every grass blade; roots sit 12 mm into the shell. Vine stems start at their exact sampled anchors. The imported-roof regression checks all of these anchors against Godot collision triangles.
+
+Both references were made with the built-in image generation tool and copied into this directory. They are input studies, not menu thumbnails. The menu uses an actual Godot render.
+
+Train prompt: "Use case: stylized-concept. Asset type: isolated object reference for Hunyuan3D image-to-3D game asset reconstruction. Make ONE abandoned compact Japanese-inspired commuter railway carriage, full entire vehicle visible, front three-quarter view, facing slightly left, front at left foreground and long right side receding to upper right. Cream enamel body with deep forest green horizontal stripe, dark recessed turquoise windows, two headlights, cab front windows, side sliding doors, exposed dark rusty wheel bogies. Rounded chamfered roof. Patchy moss carpets and a few thick ivy vines on roof, light rust and chipped enamel. Carefully crafted semi realistic game prop, readable structural shapes. No scene, no tracks, no ground, no platform, no people, no lettering, no logos, no separate objects. Plain light gray background, soft even studio lighting and minimal contact shadow. Full object fits with ample margin, wheel bases and rear end visible. Wide landscape composition."
+
+Clock prompt: "Use case: stylized-concept. Asset type: isolated reference for Hunyuan3D image-to-3D game reconstruction. ONE sculptural post-apocalyptic station clock swallowed by a living tree stump. A tall weathered round railway clock with cream dial, dark iron circular rim and two black hands, mounted atop a short cast iron post; thick gnarled twisting banyan roots organically embrace the post and part of the clock rim. Huge curving roots spread from a single rooted base. Clock remains readable, all parts firmly connected. A few moss patches and tiny fern shoots on the bark. An original abandoned train station artifact, peaceful and lush. Beautiful carefully detailed sculptural game prop, warm gray brown bark, dark green patina iron, old ivory face. Object about twice as tall as wide, entire object centered in portrait frame, three quarter view with only slight side perspective. Plain light gray background, even studio light. No ground plane, no scenery, no separate objects, no floating parts, no decorative fantasy elements, no words, no watermark."
+
+## Pond-spirit prototype
+
+The user's chao image is a style reference. The original jade creature has a large teardrop head, three-leaf sprout, ivory belly, moss-yellow hands and feet, and independently rigged oval eyes. `spirit_reference.png` was generated with the built-in imagegen tool; `spirit_prompt.txt` preserves the full prompt. Local Hunyuan3D 2.1 job `1d9e348d-0744-4779-a6b5-957d5ae5dab9`, seed 9141503, generated the base geometry. Raw mesh, API workflow and success history are retained alongside it.
+
+`blender/build_station_spirit.py` removes the reconstructed studio backdrop, repairs and reduces the mesh, paints two fixed 512-pixel colour pages, adds facial features, assigns normalized skin weights, and creates a 12-bone rig. The four editable Blender actions are `SpiritIdle` (breathing, blinking, sprout movement), `SpiritLook`, `SpiritWave`, and `SpiritDoze`. Feet stay planted; the head, shoulder/elbow chains and eyes have separate controls. `blender/station_spirit.blend` is the editable source; `assets/models/station_spirit.glb` is the textured, skinned game asset; `spirit_manifest.json` records the actual budget.
+
+The scene generator records three placements, scales, rotations and independent phases in `station_layout.json`, and clears their immediate paving. Godot instantiates the shared rigged GLB at those source-authored locations. The first prototype remains in place, occasionally looking, waving or dozing; locomotion and player interaction are not implemented. AnimationPlayer explicitly seeks authored clips using the shared scene clock, preserving Pause and Reset. `tests/station_creatures.gd` verifies imported actions, actual bone movement, foot contact, collision, frozen Pause and retained Reset time. The native visual script captures the full gesture sequence and both sides.
+
+Regenerate the creature with Blender `--background --python blender/build_station_spirit.py`, then regenerate the environment with `blender/build_station.py` when placements change. No Blender add-on was necessary.
+
+`spirit-preview.mp4` is a 23-second native Godot capture of the finished model breathing/blinking, looking, waving and dozing. Its reproducible capture script is `tests/station_spirit_reel.gd`; the actual game asset remains below 0.8 MB at 9,188 triangles.
+
+## Environment decisions
+
+Bright warm sunlight, cool jade water and irregular lime/olive growth carry the atmosphere. The roof is open sky across the whole central hall; only bare trusses and jagged perimeter remnants remain. Standing columns reach below the flooded bed, truss braces meet chords, and a fallen member rests on the bed. Three raised platforms connect via a broad concourse. Visible low rails follow their external edges; the same source geometry data drives collision. Trees have grounded spreading roots, branches connect to crowns, and vines descend from real beam and roof attachments.
+
+Original 256-pixel material studies, individually jointed paving, folded leaves, fern fronds and grasses provide close detail. Surface coordinates stay attached to the world or UVs. Reflection sampling is optical; it does not move material coordinates. Ripples, under-water light patterns, sky drift, plant motion, seeds, drips and the original quiet garden/water loop obey the scene clock and Pause. Reset restores the opening viewpoint without rewinding time. Desktop, touch and resolution controls use the shared framework.
+
+Regenerate: run `blender/prepare_station_assets.py` then `blender/build_station.py` in Blender. The complete editable environment is `blender/verdant_terminus.blend`. Review: `tests/station.gd` and native `tests/station_visual.gd`. Captures go to ignored `build-logs/station-*.png`.
