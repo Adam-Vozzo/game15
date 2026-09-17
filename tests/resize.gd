@@ -7,7 +7,7 @@ func settle() -> void:
     for i in range(35): await process_frame
 
 func run() -> void:
-    for id in ["menu","coast","town","sea","lowwater","laundry","reservoir","signal","painted","roccella","station","main"]:
+    for id in ["menu","coast","town","sea","lowwater","laundry","reservoir","signal","painted","roccella","station","azure","main"]:
         change_scene_to_file("res://"+id+".tscn")
         await settle()
         for shape in [Vector2i(390,844),Vector2i(640,360),Vector2i(844,390),Vector2i(1280,800)]:

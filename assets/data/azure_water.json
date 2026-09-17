@@ -1,0 +1,46 @@
+{
+  "regions": [
+    {
+      "name": "Main",
+      "start": -220,
+      "end": 220,
+      "top": 18,
+      "bottom": -35,
+      "counts": [
+        1300,
+        2000,
+        240,
+        290
+      ]
+    },
+    {
+      "name": "UpperCurve",
+      "start": 0,
+      "end": 302.8791897165167,
+      "top": 42,
+      "bottom": 18,
+      "counts": [
+        1040,
+        1520,
+        190,
+        230
+      ]
+    }
+  ],
+  "counts": {
+    "Main": {
+      "Threads": 1300,
+      "Spray": 2000,
+      "Mist": 240,
+      "Foam": 290
+    },
+    "UpperCurve": {
+      "Threads": 1040,
+      "Spray": 1520,
+      "Mist": 190,
+      "Foam": 230
+    }
+  },
+  "total": 6810,
+  "seed": 180927
+}

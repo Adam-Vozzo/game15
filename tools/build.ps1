@@ -8,7 +8,7 @@ if ($RebuildTextures) {
     if ($proc.ExitCode -ne 0) { throw 'Aseprite texture build failed.' }
 }
 if ($RebuildAssets) {
-    foreach ($script in @('build_assets.py','build_places.py','build_sea.py','build_phuket.py','build_phuket_audio.py','build_whale.py','build_lowwater.py','build_interiors.py','build_signal.py','build_painted.py','build_roccella.py','prepare_station_assets.py','build_station_spirit.py','build_station.py')) {
+    foreach ($script in @('build_assets.py','build_places.py','build_sea.py','build_phuket.py','build_phuket_audio.py','build_whale.py','build_lowwater.py','build_interiors.py','build_signal.py','build_painted.py','build_roccella.py','prepare_station_assets.py','build_station_spirit.py','build_station.py','build_azure.py','build_azure_water.py')) {
         $outLog = Join-Path $logRoot "$script.log"
         $errLog = Join-Path $logRoot "$script-errors.log"
         $scriptPath = '"' + (Join-Path $projectRoot "blender/$script") + '"'
@@ -39,6 +39,7 @@ Invoke-Engine @('--script','tests/painted.gd') 'painted-tests'
 Invoke-Engine @('--script','tests/roccella.gd') 'roccella-tests'
 Invoke-Engine @('--script','tests/station.gd') 'station-tests'
 Invoke-Engine @('--script','tests/station_creatures.gd') 'station-creature-tests'
+Invoke-Engine @('--script','tests/azure.gd') 'azure-tests'
 Invoke-Engine @('--script','tests/audio_pause.gd') 'audio-pause-tests'
 Invoke-Engine @('--script','tests/resolution.gd') 'resolution-tests'
 Invoke-Engine @('--export-release','Web','docs/index.html') 'export'
